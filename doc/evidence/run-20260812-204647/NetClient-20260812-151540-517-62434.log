@@ -1,0 +1,14 @@
+[15:15:40:530] ../apps/NetClient/main.cpp@main[21]                                                  : Run 20260812-151540-517 → <cwd>/logs/NetClient-20260812-151540-517-62434.log
+[15:15:40:530] ../apps/NetClient/ClientApp.cpp@run[103]                                             : Command Read
+[15:15:40:531] ../apps/NetClient/ClientApp.cpp@runOnce[128]                                         : Connecting to 127.0.0.1:9555
+[15:15:40:531] ../net_handler/NetTransport.cpp@connect[148]                                         : Connect 127.0.0.1:9555
+[15:15:40:532] ../net_handler/NetTransport.cpp@operator()[40]                                       : Connected to 127.0.0.1 — binding the client session.
+[15:15:40:532] ../apps/NetClient/ClientSession.cpp@onConnected[63]                                  : Connected to server!
+[15:15:40:533] ../apps/NetClient/ClientSession.cpp@sendRequest[102]                                 : TIME=15:15:40:533 UTC IP=127.0.0.1 OP=SEND READ
+[15:15:40:542] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:15:40:542 UTC IP=127.0.0.1 OP=RECV VersionSrv MSG=<redacted len=3>
+[15:15:40:542] ../net_proto/ProtocolLayers.cpp@parseClientVx[133]                                   : TIME=15:15:40:542 UTC IP=127.0.0.1 OP=VERSION MSG=<redacted len=3>
+[15:15:40:543] ../apps/NetClient/ClientSession.cpp@sendRequest[90]                                  : Request already sent
+[15:15:40:546] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:15:40:546 UTC IP=127.0.0.1 OP=RECV Ok MSG=<redacted len=8>
+[15:15:40:547] ../net_proto/ProtocolLayers.cpp@parseClientV1[176]                                   : TIME=15:15:40:547 UTC IP=127.0.0.1 OP=OK MSG=<redacted len=8>
+[15:15:40:547] ../net_handler/NetTransport.cpp@operator()[97]                                       : TIME=15:15:40:547 UTC IP=127.0.0.1 OP=DISCONNECT
+[15:15:40:547] ../apps/NetClient/ClientApp.cpp@runOnce[135]                                         : Exit 0

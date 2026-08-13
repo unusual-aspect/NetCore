@@ -1,0 +1,14 @@
+[15:23:14:644] ../apps/NetClient/main.cpp@main[21]                                                  : Run 20260812-152314-619 → <cwd>/logs/NetClient-20260812-152314-619-63832.log
+[15:23:14:644] ../apps/NetClient/ClientApp.cpp@run[109]                                             : Command Shutdown
+[15:23:14:645] ../apps/NetClient/ClientApp.cpp@runOnce[128]                                         : Connecting to 127.0.0.1:9555
+[15:23:14:645] ../net_handler/NetTransport.cpp@connect[148]                                         : Connect 127.0.0.1:9555
+[15:23:14:647] ../net_handler/NetTransport.cpp@operator()[40]                                       : Connected to 127.0.0.1 — binding the client session.
+[15:23:14:647] ../apps/NetClient/ClientSession.cpp@onConnected[63]                                  : Connected to server!
+[15:23:14:647] ../apps/NetClient/ClientSession.cpp@sendRequest[108]                                 : TIME=15:23:14:647 UTC IP=127.0.0.1 OP=SEND SHUTDOWN
+[15:23:14:655] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:23:14:655 UTC IP=127.0.0.1 OP=RECV VersionSrv MSG=<redacted len=3>
+[15:23:14:655] ../net_proto/ProtocolLayers.cpp@parseClientVx[133]                                   : TIME=15:23:14:655 UTC IP=127.0.0.1 OP=VERSION MSG=<redacted len=3>
+[15:23:14:655] ../apps/NetClient/ClientSession.cpp@sendRequest[90]                                  : Request already sent
+[15:23:14:656] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:23:14:656 UTC IP=127.0.0.1 OP=RECV Ok
+[15:23:14:656] ../net_proto/ProtocolLayers.cpp@parseClientV1[176]                                   : TIME=15:23:14:656 UTC IP=127.0.0.1 OP=OK MSG=Ok
+[15:23:14:657] ../net_handler/NetTransport.cpp@operator()[97]                                       : TIME=15:23:14:657 UTC IP=127.0.0.1 OP=DISCONNECT
+[15:23:14:657] ../apps/NetClient/ClientApp.cpp@runOnce[135]                                         : Exit 0

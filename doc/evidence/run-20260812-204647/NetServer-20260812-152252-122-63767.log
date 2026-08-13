@@ -1,0 +1,22 @@
+[15:22:52:134] ../apps/NetServer/main.cpp@main[39]                                                  : Run 20260812-152252-122 → <cwd>/logs/NetServer-20260812-152252-122-63767.log
+[15:22:52:137] ../net_handler/NetTransport.cpp@listen[142]                                          : Start listen on 127.0.0.1:9555
+[15:22:52:158] ../apps/NetServer/ServerApp.cpp@run[77]                                              : Start NetServer on 127.0.0.1:9555
+[15:22:55:449] ../apps/NetServer/ServerSession.cpp@onConnected[69]                                  : TIME=15:22:55:449 UTC IP=127.0.0.1 OP=ACCEPT
+[15:22:55:452] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:22:55:452 UTC IP=127.0.0.1 OP=RECV Read
+[15:22:55:459] ../net_store/MessageStore.cpp@get[314]                                               : TIME=15:22:55:459 UTC IP=127.0.0.1 OP=STORE READ MSG=lol
+[15:22:55:459] ../net_proto/ProtocolLayers.cpp@operator()[59]                                       : TIME=15:22:55:459 UTC IP=127.0.0.1 OP=READ MSG=lol
+[15:22:55:460] ../net_handler/NetTransport.cpp@operator()[93]                                       : TIME=15:22:55:460 UTC IP=127.0.0.1 OP=DISCONNECT
+[15:22:57:158] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=1 rejected=0 reads=1 sets=0 shutdowns=0 store_errors=0
+[15:23:02:159] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=1 rejected=0 reads=1 sets=0 shutdowns=0 store_errors=0
+[15:23:02:338] ../apps/NetServer/ServerSession.cpp@onConnected[69]                                  : TIME=15:23:02:338 UTC IP=127.0.0.1 OP=ACCEPT
+[15:23:02:342] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:23:02:342 UTC IP=127.0.0.1 OP=RECV Read
+[15:23:02:346] ../net_store/MessageStore.cpp@get[314]                                               : TIME=15:23:02:346 UTC IP=127.0.0.1 OP=STORE READ MSG=lol
+[15:23:02:346] ../net_proto/ProtocolLayers.cpp@operator()[59]                                       : TIME=15:23:02:346 UTC IP=127.0.0.1 OP=READ MSG=lol
+[15:23:02:347] ../net_handler/NetTransport.cpp@operator()[93]                                       : TIME=15:23:02:347 UTC IP=127.0.0.1 OP=DISCONNECT
+[15:23:07:159] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=2 sets=0 shutdowns=0 store_errors=0
+[15:23:12:160] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=2 sets=0 shutdowns=0 store_errors=0
+[15:23:14:647] ../apps/NetServer/ServerSession.cpp@onConnected[69]                                  : TIME=15:23:14:647 UTC IP=127.0.0.1 OP=ACCEPT
+[15:23:14:653] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:23:14:653 UTC IP=127.0.0.1 OP=RECV Shutdown
+[15:23:14:653] ../net_proto/ProtocolLayers.cpp@parseServerV1[111]                                   : TIME=15:23:14:653 UTC IP=127.0.0.1 OP=SHUTDOWN MSG=Graceful stop request
+[15:23:14:654] ../net_handler/NetTransport.cpp@operator()[93]                                       : TIME=15:23:14:654 UTC IP=127.0.0.1 OP=DISCONNECT
+[15:23:14:655] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics stop accepts=3 rejected=0 reads=2 sets=0 shutdowns=1 store_errors=0

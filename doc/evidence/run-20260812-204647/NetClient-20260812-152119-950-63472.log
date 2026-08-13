@@ -1,0 +1,9 @@
+[15:21:19:961] ../apps/NetClient/main.cpp@main[21]                                                  : Run 20260812-152119-950 → <cwd>/logs/NetClient-20260812-152119-950-63472.log
+[15:21:19:961] ../apps/NetClient/ClientApp.cpp@run[109]                                             : Command Shutdown
+[15:21:19:961] ../apps/NetClient/ClientApp.cpp@runOnce[128]                                         : Connecting to 127.0.0.1:9555
+[15:21:19:962] ../net_handler/NetTransport.cpp@connect[148]                                         : Connect 127.0.0.1:9555
+[15:21:19:962] ../net_handler/UsRuntime.cpp@on_connect_error[138]                                   : Cannot connect — the outbound TCP handshake failed.
+[15:21:19:963] ../net_handler/NetTransport.cpp@operator()[116]                                      : connect failed
+[15:21:19:963] ../apps/NetClient/ClientApp.cpp@operator()[125]                                      : connect failed
+[15:21:19:963] ../net_handler/NetTransport.cpp@operator()[102]                                      : TIME=15:21:19:963 UTC IP=unknown OP=DISCONNECT
+[15:21:19:963] ../apps/NetClient/ClientApp.cpp@runOnce[135]                                         : Exit 1

@@ -1,0 +1,13 @@
+[12:32:12:778] ../apps/NetServer/main.cpp@main[16]                                                  : Run 20260812-123212-768 → <cwd>/build/bin/logs/NetServer-20260812-123212-768-30122.log
+[12:32:12:818] ../net_handler/NetTransport.cpp@listen[106]                                          : Start listen on port 9555
+[12:32:12:818] ../apps/NetServer/ServerApp.cpp@run[20]                                              : Start NetServer on port 9555
+[12:32:20:399] ../apps/NetServer/ServerSession.cpp@onConnected[24]                                  : TIME=12:32:20:399 UTC IP=127.0.0.1 OP=ACCEPT
+[12:32:20:403] ../net_proto/ProtocolLayers.cpp@logRecv[150]                                         : TIME=12:32:20:403 UTC IP=127.0.0.1 OP=RECV Set MSG=lol
+[12:32:20:404] ../net_proto/ProtocolLayers.cpp@parseServerV1[40]                                    : TIME=12:32:20:404 UTC IP=127.0.0.1 OP=SET MSG=lol
+[12:32:20:410] ../net_store/MessageStore.cpp@put[113]                                               : TIME=12:32:20:409 UTC IP=127.0.0.1 OP=STORE PUT MSG=lol
+[12:32:20:411] ../net_handler/NetTransport.cpp@operator()[58]                                       : TIME=12:32:20:411 UTC IP=127.0.0.1 OP=DISCONNECT
+[12:32:25:524] ../apps/NetServer/ServerSession.cpp@onConnected[24]                                  : TIME=12:32:25:524 UTC IP=127.0.0.1 OP=ACCEPT
+[12:32:29:997] ../net_proto/ProtocolLayers.cpp@logRecv[150]                                         : TIME=12:32:29:997 UTC IP=127.0.0.1 OP=RECV Set MSG=test
+[12:32:29:998] ../net_proto/ProtocolLayers.cpp@parseServerV1[40]                                    : TIME=12:32:29:998 UTC IP=127.0.0.1 OP=SET MSG=test
+[12:32:30:004] ../net_store/MessageStore.cpp@put[113]                                               : TIME=12:32:30:004 UTC IP=127.0.0.1 OP=STORE PUT MSG=test
+[12:33:24:610] ../net_handler/NetTransport.cpp@operator()[58]                                       : TIME=12:33:24:610 UTC IP=127.0.0.1 OP=DISCONNECT

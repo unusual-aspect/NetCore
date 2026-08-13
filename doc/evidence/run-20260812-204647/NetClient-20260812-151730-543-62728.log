@@ -1,0 +1,35 @@
+[15:17:30:560] ../apps/NetClient/main.cpp@main[21]                                                  : Run 20260812-151730-543 → <cwd>/logs/NetClient-20260812-151730-543-62728.log
+[15:17:30:560] ../apps/NetClient/ClientApp.cpp@run[77]                                              : Live Set loop → 127.0.0.1:9555
+[15:17:30:561] ../apps/NetClient/ClientApp.cpp@runLiveOnce[176]                                     : Connecting to 127.0.0.1:9555 (live, staying connected)
+[15:17:30:561] ../net_handler/NetTransport.cpp@connect[148]                                         : Connect 127.0.0.1:9555
+[15:17:30:563] ../net_handler/NetTransport.cpp@operator()[40]                                       : Connected to 127.0.0.1 — binding the client session.
+[15:17:30:563] ../apps/NetClient/ClientSession.cpp@onConnected[63]                                  : Connected to server!
+[15:17:30:568] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:17:30:568 UTC IP=127.0.0.1 OP=RECV VersionSrv MSG=<redacted len=3>
+[15:17:30:568] ../net_proto/ProtocolLayers.cpp@parseClientVx[133]                                   : TIME=15:17:30:568 UTC IP=127.0.0.1 OP=VERSION MSG=<redacted len=3>
+[15:17:34:953] ../apps/NetClient/ClientApp.cpp@operator()[222]                                      : Command Set: DROP
+[15:17:34:954] ../apps/NetClient/ClientSession.cpp@sendRequest[105]                                 : TIME=15:17:34:954 UTC IP=127.0.0.1 OP=SEND SET MSG=<redacted len=4>
+[15:17:34:964] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:17:34:963 UTC IP=127.0.0.1 OP=RECV Ok
+[15:17:34:964] ../net_proto/ProtocolLayers.cpp@parseClientV1[176]                                   : TIME=15:17:34:964 UTC IP=127.0.0.1 OP=OK MSG=Ok
+[15:17:55:670] ../net_handler/NetTransport.cpp@operator()[97]                                       : TIME=15:17:55:670 UTC IP=127.0.0.1 OP=DISCONNECT
+[15:17:55:672] ../apps/NetClient/ClientSession.cpp@onDisconnected[74]                               : TIME=15:17:55:671 UTC IP=127.0.0.1 OP=Cannot continue MSG=<redacted len=74>
+[15:18:06:854] ../apps/NetClient/ClientApp.cpp@runLiveOnce[237]                                     : Exit 1
+[15:18:06:854] ../apps/NetClient/ClientApp.cpp@runLive[247]                                         : Server is not answering — waiting 5 seconds for the service to restart, then one reconnect.
+[15:18:11:855] ../apps/NetClient/ClientApp.cpp@runLive[250]                                         : Retrying live once → 127.0.0.1:9555
+[15:18:11:856] ../apps/NetClient/ClientApp.cpp@runLiveOnce[176]                                     : Connecting to 127.0.0.1:9555 (live, staying connected)
+[15:18:11:856] ../net_handler/NetTransport.cpp@connect[148]                                         : Connect 127.0.0.1:9555
+[15:18:11:857] ../net_handler/NetTransport.cpp@operator()[40]                                       : Connected to 127.0.0.1 — binding the client session.
+[15:18:11:857] ../apps/NetClient/ClientSession.cpp@onConnected[63]                                  : Connected to server!
+[15:18:11:862] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:18:11:862 UTC IP=127.0.0.1 OP=RECV VersionSrv MSG=<redacted len=3>
+[15:18:11:863] ../net_proto/ProtocolLayers.cpp@parseClientVx[133]                                   : TIME=15:18:11:863 UTC IP=127.0.0.1 OP=VERSION MSG=<redacted len=3>
+[15:18:11:863] ../apps/NetClient/ClientApp.cpp@operator()[222]                                      : Command Set: [A
+[15:18:11:863] ../apps/NetClient/ClientSession.cpp@sendRequest[105]                                 : TIME=15:18:11:863 UTC IP=127.0.0.1 OP=SEND SET MSG=<redacted len=3>
+[15:18:11:875] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:18:11:875 UTC IP=127.0.0.1 OP=RECV Ok
+[15:18:11:876] ../net_proto/ProtocolLayers.cpp@parseClientV1[176]                                   : TIME=15:18:11:876 UTC IP=127.0.0.1 OP=OK MSG=Ok
+[15:18:15:183] ../apps/NetClient/ClientApp.cpp@operator()[222]                                      : Command Set: lol
+[15:18:15:183] ../apps/NetClient/ClientSession.cpp@sendRequest[105]                                 : TIME=15:18:15:183 UTC IP=127.0.0.1 OP=SEND SET MSG=<redacted len=3>
+[15:18:15:191] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:18:15:191 UTC IP=127.0.0.1 OP=RECV Ok
+[15:18:15:191] ../net_proto/ProtocolLayers.cpp@parseClientV1[176]                                   : TIME=15:18:15:191 UTC IP=127.0.0.1 OP=OK MSG=Ok
+[15:19:43:747] ../net_handler/NetTransport.cpp@operator()[97]                                       : TIME=15:19:43:747 UTC IP=127.0.0.1 OP=DISCONNECT
+[15:19:43:748] ../apps/NetClient/ClientSession.cpp@onDisconnected[74]                               : TIME=15:19:43:748 UTC IP=127.0.0.1 OP=Cannot continue MSG=<redacted len=74>
+[15:19:45:075] ../apps/NetClient/ClientApp.cpp@runLiveOnce[237]                                     : Exit 1
+[15:19:45:076] ../apps/NetClient/ClientApp.cpp@runLive[256]                                         : Cannot reach the server after one retry — it is not available. Stopping.

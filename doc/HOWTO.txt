@@ -1,0 +1,537 @@
+# HOW TO BUILD & RUN THE PROJECT
+
+> NOTE: Docker commands in this document were AI-generated and have not been fully tested. Podman commands have been verified. If you encounter issues with Docker, please report them or switch to Podman which has identical syntax in most cases.
+
+Project overview and wire/CLI surface: README.md in this folder.
+Library and architecture choices: DECISIONS.md.
+
+Binaries land in out/build/<preset>/bin/  (NetServer, NetClient, tests).
+
+---
+
+## 1. REQUIREMENTS
+
+### 1.1 Editor / IDE (choose one)
+You must install one of the following:
+- VSCodium
+- Visual Studio Code
+- Visual Studio (Windows only)
+
+Recommended:
+- Lightweight workflow → VSCodium / VS Code
+- Full Windows C++ toolchain → Visual Studio 2022 (MSVC + CMake + Ninja)
+
+### 1.2 Native toolchain
+- CMake >= 3.22
+- Ninja
+- C++20 compiler (MSVC 2022 / GCC 10+ / Clang)
+- git (start scripts clone vcpkg if it is missing)
+- zip, unzip, tar, curl, pkg-config (vcpkg bootstrap + ports)
+- VCPKG_ROOT pointing at a vcpkg tree (start.sh / start.cmd set this)
+
+Install **before** `source ./start.sh`. Never `sudo ./start.sh` (vcpkg would land in `/root`).
+`start.sh` detects the distro (`/etc/os-release` + package manager) and prints the matching install line if anything is missing.
+
+Debian / Ubuntu / Mint:
+```bash
+sudo apt-get update
+sudo apt-get install -y build-essential cmake ninja-build pkg-config curl zip unzip tar git
+```
+
+Fedora / RHEL / Rocky / Alma:
+```bash
+sudo dnf install -y gcc-c++ cmake ninja-build pkgconf-pkg-config curl zip unzip tar git
+```
+
+openSUSE:
+```bash
+sudo zypper install -y gcc-c++ cmake ninja pkg-config curl zip unzip tar git
+```
+
+Arch / Manjaro:
+```bash
+sudo pacman -Syu --needed base-devel cmake ninja pkgconf curl zip unzip tar git
+```
+
+Alpine (also needs `export VCPKG_FORCE_SYSTEM_BINARIES=1` — `start.sh` sets this):
+```bash
+sudo apk add build-base cmake ninja pkgconf curl zip unzip tar git
+```
+
+Then prepare / clean (no +x needed; do not use `sudo`):
+```bash
+source ./start.sh    # prepare tools, vcpkg, env
+source ./clean.sh    # wipe build/ out/ CMake leftovers (keeps source + doc/evidence)
+```
+On CIFS/Samba `./start.sh` and `./clean.sh` are often Permission denied — always `source` or `bash`.
+
+You do NOT need to install the listed libraries by hand. vcpkg.json is the manifest:
+  usockets, libuv, reflectcpp, magic-enum, cxxopts, sqlite3, gtest
+
+---
+
+## 2. BUILD SYSTEM
+
+This project uses:
+- CMake (CMakePresets.json)
+- vcpkg (toolchain file from $VCPKG_ROOT)
+
+### 2.1 First-time setup (does NOT compile)
+
+When you run:
+- start.sh   (Linux/macOS) — `source ./start.sh` (prepare); never `sudo`
+- clean.sh   (Linux/macOS) — `source ./clean.sh` (wipe generated folders); never `sudo`
+- start.cmd / clean.cmd  (Windows)
+
+The script will:
+1. Check required tools (and CMake version) and stop with the distro-specific install command if anything is missing
+2. Bootstrap vcpkg into ~/vcpkg (or %USERPROFILE%\vcpkg) if missing
+3. Set VCPKG_ROOT / VCPKG_DISABLE_METRICS for the session (and persist them)
+4. Open the tree in VSCodium, VS Code, or Visual Studio (if found)
+
+It does not run cmake. Configure and build yourself (section 6).
+To wipe generated trees: clean.sh / clean.cmd (section 6.4).
+
+Windows start.cmd also requires:
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat
+
+If that path is wrong on your machine, edit start.cmd.
+
+### 2.2 Presets
+
+Native:
+  linux-debug    linux-release
+  win-debug      win-release
+
+CI (presets named for the old template / Gitea workflow — **not verified for this project**; see DECISIONS.md):
+  ci-linux       Release, x64-linux, VCPKG_INSTALLED_DIR=/opt/vcpkg-linux
+  ci-win         MinGW cross, x64-mingw-dynamic
+  ci-testing     ci-linux + Debug + coverage flags
+
+Binary dir for every preset: out/build/<presetName>
+
+---
+
+## 3. CONTAINER ENGINE (Podman / Docker)
+
+You must install one of the following:
+- Podman (recommended)
+- Docker
+
+### Linux
+
+Install via your package manager:
+
+Podman:
+```bash
+# Debian/Ubuntu
+sudo apt install podman
+
+# Fedora
+sudo dnf install podman
+
+# Arch
+sudo pacman -S podman
+```
+
+Docker:
+```bash
+# Follow official Docker installation guide
+# https://docs.docker.com/engine/install/
+```
+
+No additional virtualization required on Linux.
+
+### Windows
+
+Enable Windows features:
+- Hyper-V
+- Virtual Machine Platform
+- Windows Hypervisor Platform
+
+Reboot system after enabling these features.
+
+Podman:
+- Download from: https://github.com/containers/podman/releases
+
+Docker Desktop:
+- Download from: https://www.docker.com/products/docker-desktop
+
+### Setup
+
+Podman on Windows:
+```cmd
+podman machine init
+podman machine start
+```
+
+Docker on Windows:
+- Docker Desktop handles this automatically
+- Ensure it's running in the system tray
+
+Verify installation:
+```bash
+podman info
+# OR
+docker info
+```
+
+---
+
+## 4. BUILDING THE CI CONTAINER
+
+> WARNING: Dockerfile.base, Dockerfile.builder, and .gitea/workflows/build.yaml are leftover from a previous project template. They have not been re-tested against this NetProject. Prefer native presets (linux-debug / win-debug). Details: DECISIONS.md (CI template leftover).
+
+Dockerfiles live at the repo root (Dockerfile.base, Dockerfile.builder).
+vcpkg.json must be next to those files when you build (it already is).
+
+### 4.1 Build Base Images
+
+Podman:
+```bash
+podman build --format docker --no-cache -f Dockerfile.base -t ci-base .
+podman build --format docker --no-cache -f Dockerfile.builder -t ci-runner .
+```
+
+Docker:
+```bash
+docker build --no-cache -f Dockerfile.base -t ci-base .
+docker build --no-cache -f Dockerfile.builder -t ci-runner .
+```
+
+### 4.2 Cleanup (if needed)
+
+Podman:
+```bash
+podman image prune -a
+podman system prune
+```
+
+Docker:
+```bash
+docker image prune -a
+docker system prune
+```
+
+---
+
+## 5. RUNNING CI BUILDS IN CONTAINER
+
+Presets ci-linux / ci-win expect vcpkg already installed in the image
+(/opt/vcpkg-linux, /opt/vcpkg-win). That is what Dockerfile.builder provides.
+
+### 5.1 Using Podman (Tested)
+```bash
+# Start container in background:
+podman run -dt --name ci localhost/ci-runner bash
+
+# Enter interactive shell:
+podman exec -it ci bash
+
+# Create working directory:
+podman exec ci mkdir -p /app
+
+# Copy project files:
+podman cp . ci:/app
+
+# Compile for Linux:
+podman exec -w /app ci cmake --preset ci-linux
+podman exec -w /app ci cmake --build out/build/ci-linux
+
+# Tests (Linux image):
+podman exec -w /app/out/build/ci-linux ci ctest --output-on-failure --timeout 300
+
+# Compile for Windows (MinGW cross-compile):
+podman exec -w /app ci cmake --preset ci-win
+podman exec -w /app ci cmake --build out/build/ci-win
+
+# Stop and remove container:
+podman rm -f ci
+```
+
+### 5.2 Using Docker
+```bash
+# Start container in background:
+docker run -dt --name ci ci-runner bash
+
+# Enter interactive shell:
+docker exec -it ci bash
+
+# Create working directory:
+docker exec ci mkdir -p /app
+
+# Copy project files:
+docker cp . ci:/app
+
+# Compile for Linux:
+docker exec -w /app ci cmake --preset ci-linux
+docker exec -w /app ci cmake --build out/build/ci-linux
+
+# Compile for Windows (MinGW cross-compile):
+docker exec -w /app ci cmake --preset ci-win
+docker exec -w /app ci cmake --build out/build/ci-win
+
+# Stop and remove container:
+docker rm -f ci
+```
+
+### 5.3 One-shot Build (Volume Mount)
+
+Linux build:
+
+Podman:
+```bash
+podman run --rm -v .:/workspace:Z -w /workspace ci-runner bash -c "
+    cmake --preset ci-linux &&
+    cmake --build out/build/ci-linux"
+```
+
+Docker (AI-generated, untested):
+```bash
+docker run --rm -v .:/workspace -w /workspace ci-runner bash -c "
+    cmake --preset ci-linux &&
+    cmake --build out/build/ci-linux"
+```
+
+Windows build (MinGW):
+
+Podman:
+```bash
+podman run --rm -v .:/workspace:Z -w /workspace ci-runner bash -c "
+    cmake --preset ci-win &&
+    cmake --build out/build/ci-win"
+```
+
+Docker (AI-generated, untested):
+```bash
+docker run --rm -v .:/workspace -w /workspace ci-runner bash -c "
+    cmake --preset ci-win &&
+    cmake --build out/build/ci-win"
+```
+
+---
+
+## 6. RUNNING THE PROJECT LOCALLY
+
+### 6.1 Native configure + build
+
+Windows (from a VS 2022 x64 Developer Command Prompt, VCPKG_ROOT set):
+```cmd
+start.cmd
+cmake --preset win-debug
+cmake --build out/build/win-debug
+ctest --test-dir out/build/win-debug --output-on-failure
+```
+
+Linux / macOS:
+```bash
+source ./start.sh
+cmake --preset linux-debug
+cmake --build out/build/linux-debug
+ctest --test-dir out/build/linux-debug --output-on-failure
+```
+If `./start.sh` is Permission denied (CIFS/Samba): `source ./start.sh` or `bash ./start.sh`. Never sudo.
+
+Release presets: win-release / linux-release.
+
+Optional CMake switches (root CMakeLists.txt):
+  -DBUILD_NET_SERVER=0
+  -DBUILD_NET_CLIENT=0
+
+### 6.2 Run the net service
+
+From the build bin directory (cwd is where message.db and logs/ are created unless --db is absolute):
+
+```text
+NetServer
+NetServer --bind 127.0.0.1 --db message.db
+NetServer --bind 0.0.0.0 --allow-remote-shutdown
+
+NetClient --read
+NetClient --set "hello"
+NetClient
+          (no flag: prompts for the Set payload)
+
+NetClient --live
+          (stays connected; prompt "Set new message:" in a loop.
+           hears Shutdown goodbye / "server is not available")
+
+NetClient --shutdown
+          (from loopback: goodbye to other clients, then stops the server)
+
+NetClient --host 127.0.0.1 --port 9555 --read
+```
+
+Hardening defaults:
+- Server binds 127.0.0.1 (not all interfaces). Use --bind 0.0.0.0 for LAN.
+- Server listen port is fixed (9555); there is no NetServer --port.
+- Second NetServer fails bind and exits without opening the DB.
+- Shutdown from non-loopback is refused unless --allow-remote-shutdown.
+- --log-retain N keeps at most N access_log rows (default 100000; 0 = unbounded).
+- PUT access_log detail is truncated (4 KiB) so large bodies do not fill the disk.
+- --set / stdin Set bodies are capped at 1 MiB (oversize is refused before connect/store).
+- Concurrent Sets run one at a time on StoreWorker (last successful commit wins).
+- Idle incomplete-frame sockets (~120 s) and aggregate receive buffers are capped (see NetDefaults).
+- --verbose logs full message bodies; default DBG redacts MSG= payloads.
+- SIGINT/SIGTERM stop the server loop (dev/systemd convenience). NetClient also exits its loop on those signals.
+- Health check: NetClient --read (no separate ping opcode).
+- In-process DDoS/rate-limit is out of scope — hide behind a proxy or keep bind on loopback (see DECISIONS.md).
+- Metrics counters (accepts/rejects/reads/sets/shutdowns/store_errors) are kept in-process for tests; they are not flushed to DBG on a timer.
+
+If the server process dies mid-request, the client waits 5 seconds and retries once.
+If that fails: "not available" and exit 1.
+--shutdown is never retried.
+
+DBG goes to stderr and to <cwd>/logs/{NetServer|NetClient}-{YYYYMMDD-HHMMSS-mmm}-{pid}.log
+(process exits if logs/ cannot be created). Files rotate each UTC day (and at 10 MiB within a day); newest 14 per role are kept.
+Wire-path lines also carry TIME=… UTC IP=… OP=… MSG=…
+
+### 6.2.1 Production-oriented host install
+
+```bash
+cmake --preset linux-release
+cmake --build out/build/linux-release
+cmake --install out/build/linux-release --prefix /usr/local
+```
+
+Sample unit: doc/netserver.service.example (bind localhost, SIGTERM stop).
+There is still no TLS — keep --bind on loopback or terminate TLS in front.
+
+Windows (MSVC): same bind/Shutdown loopback rules; use win-release preset and run NetServer.exe from the install or build bin directory.
+
+### 6.3 Container Interactive Mode
+
+Podman:
+```bash
+podman run --rm -it ci-runner
+```
+
+Docker (AI-generated, untested):
+```bash
+docker run --rm -it ci-runner
+```
+
+### 6.4 Wipe generated files
+
+Does not touch source, CMakeLists.txt, CMakePresets.json, vcpkg.json, or ~/vcpkg.
+
+Windows:
+```cmd
+clean.cmd
+```
+
+Linux / macOS:
+```bash
+source ./clean.sh
+```
+Same CIFS note as start.sh: `./clean.sh` needs +x; `source ./clean.sh` does not. Never sudo.
+
+Removes: out/, build/, bin/, .vs/, ad-hoc build trees, CMake cache, local CI/coverage leftovers,
+nested CMakeFiles under apps/src/tests, and the ephemeral logs/ directory.
+Runtime DBG logs and message.db* are moved into doc/evidence/run-<UTC>/ first (kept with the docs / EVIDENCE.md).
+Close Visual Studio first if .vs or out is locked.
+
+---
+
+## 7. TROUBLESHOOTING
+
+### 7.1 Podman vs Docker Differences
+
+Most commands are identical. Key differences:
+
+1. Volume mounting:
+   - Podman: May need :Z flag for SELinux (Linux)
+   - Docker: Standard -v syntax
+
+2. Rootless mode:
+   - Podman: Rootless by default
+   - Docker: Requires Docker Desktop on Windows/Mac
+
+3. Image naming:
+   - Podman: Can use localhost/image-name
+   - Docker: Uses image-name directly
+
+### 7.2 Common Issues
+
+Windows Podman:
+- Ensure podman machine is running
+- Check: podman machine list
+
+Windows Docker:
+- Ensure Docker Desktop is running
+- Check: docker ps
+
+Permission issues (Linux):
+- Add user to docker group: sudo usermod -aG docker $USER
+- Podman runs rootless by default (no group needed)
+
+CMake cannot find uSockets:
+- VCPKG_ROOT must be set and the preset must use the vcpkg toolchain
+  (CMakePresets.json already does: $env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+
+NetClient hangs / "not available":
+- NetServer must be running first
+- After a crash the client waits 5s and retries once, then exits
+- --live at the prompt still has the TCP session; a Shutdown from another client
+  prints goodbye. Press Enter to leave the stdin thread.
+
+### 7.3 Converting Commands
+
+To convert between Podman and Docker, usually just replace:
+- podman → docker
+- docker → podman
+
+Exception: Volume mounts on Linux with SELinux
+- Podman: -v .:/workspace:Z
+- Docker: -v .:/workspace
+
+---
+
+## 8. SUMMARY
+
+Minimum setup:
+- Editor (VSCodium / VS Code / Visual Studio)
+- CMake + Ninja + C++20 compiler
+- vcpkg (via start.sh / start.cmd)
+- Podman OR Docker only if you want the CI image
+
+Optional (Windows):
+- Hyper-V enabled
+- podman machine init/start (if using Podman)
+
+Build container:
+```bash
+podman build -f Dockerfile.builder -t ci-runner .
+# OR
+docker build -f Dockerfile.builder -t ci-runner .
+```
+
+Then choose:
+- Native: cmake --preset <linux|win>-debug && cmake --build out/build/<preset>
+- OR isolated CI build inside the container (presets ci-linux / ci-win)
+
+The project supports:
+- Native local development
+- Optional containerized builds (Linux / Windows cross-compile) — template leftover, not verified here
+- Both Podman and Docker command shapes in HOWTO (Podman tested historically; Docker noted as untested)
+- Gitea Actions (.gitea/workflows/build.yaml): leftover template — not verified for this NetProject
+
+---
+
+## 9. RECOMMENDED WORKFLOW
+
+For development:
+1. start.sh / start.cmd once (vcpkg + IDE)
+2. cmake --preset win-debug or linux-debug
+3. cmake --build out/build/<preset>
+4. Run NetServer, then NetClient from out/build/<preset>/bin
+
+For CI/testing:
+1. Prefer native cmake presets + ctest for this tree
+2. Treat .gitea / Dockerfile.* / ci-* as unverified previous-template scaffolding
+3. Only rely on the workflow after it is rewired and tested against NetProject
+
+For production:
+1. Prefer --bind 127.0.0.1 (the default) or terminate TLS in front if exposing beyond localhost
+2. cmake --install … and optionally doc/netserver.service.example
+3. Use SIGTERM / NetClient --shutdown (loopback) for clean stop; see DECISIONS.md Hardening

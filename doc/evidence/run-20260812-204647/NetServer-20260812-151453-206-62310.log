@@ -1,0 +1,49 @@
+[15:14:53:212] ../apps/NetServer/main.cpp@main[39]                                                  : Run 20260812-151453-206 → <cwd>/logs/NetServer-20260812-151453-206-62310.log
+[15:14:53:213] ../net_handler/NetTransport.cpp@listen[142]                                          : Start listen on 127.0.0.1:9555
+[15:14:53:252] ../apps/NetServer/ServerApp.cpp@run[77]                                              : Start NetServer on 127.0.0.1:9555
+[15:14:58:252] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:15:03:252] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:15:04:366] ../apps/NetServer/ServerSession.cpp@onConnected[69]                                  : TIME=15:15:04:366 UTC IP=127.0.0.1 OP=ACCEPT
+[15:15:04:368] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:15:04:368 UTC IP=127.0.0.1 OP=RECV Set MSG=<redacted len=8>
+[15:15:04:369] ../net_store/StoreWorker.cpp@workerMain[147]                                         : Message Set lock acquired — peer=127.0.0.1
+[15:15:04:371] ../net_store/MessageStore.cpp@put[269]                                               : TIME=15:15:04:371 UTC IP=127.0.0.1 OP=STORE PUT MSG=<redacted len=8>
+[15:15:04:371] ../net_store/StoreWorker.cpp@workerMain[156]                                         : Message Set lock released — peer=127.0.0.1
+[15:15:04:371] ../net_proto/ProtocolLayers.cpp@operator()[91]                                       : TIME=15:15:04:371 UTC IP=127.0.0.1 OP=SET MSG=<redacted len=8>
+[15:15:04:372] ../net_handler/NetTransport.cpp@operator()[93]                                       : TIME=15:15:04:372 UTC IP=127.0.0.1 OP=DISCONNECT
+[15:15:08:252] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=1 rejected=0 reads=0 sets=1 shutdowns=0 store_errors=0
+[15:15:13:253] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=1 rejected=0 reads=0 sets=1 shutdowns=0 store_errors=0
+[15:15:18:253] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=1 rejected=0 reads=0 sets=1 shutdowns=0 store_errors=0
+[15:15:23:253] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=1 rejected=0 reads=0 sets=1 shutdowns=0 store_errors=0
+[15:15:28:253] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=1 rejected=0 reads=0 sets=1 shutdowns=0 store_errors=0
+[15:15:33:254] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=1 rejected=0 reads=0 sets=1 shutdowns=0 store_errors=0
+[15:15:38:254] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=1 rejected=0 reads=0 sets=1 shutdowns=0 store_errors=0
+[15:15:40:532] ../apps/NetServer/ServerSession.cpp@onConnected[69]                                  : TIME=15:15:40:532 UTC IP=127.0.0.1 OP=ACCEPT
+[15:15:40:539] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:15:40:539 UTC IP=127.0.0.1 OP=RECV Read
+[15:15:40:546] ../net_store/MessageStore.cpp@get[314]                                               : TIME=15:15:40:546 UTC IP=127.0.0.1 OP=STORE READ MSG=<redacted len=8>
+[15:15:40:546] ../net_proto/ProtocolLayers.cpp@operator()[59]                                       : TIME=15:15:40:546 UTC IP=127.0.0.1 OP=READ MSG=<redacted len=8>
+[15:15:40:547] ../net_handler/NetTransport.cpp@operator()[93]                                       : TIME=15:15:40:547 UTC IP=127.0.0.1 OP=DISCONNECT
+[15:15:43:254] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:15:48:254] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:15:53:255] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:15:58:255] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:03:255] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:08:255] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:13:256] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:18:256] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:23:256] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:28:256] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:33:256] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:38:257] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:43:257] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:48:257] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:53:258] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:16:58:258] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:17:03:259] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=2 rejected=0 reads=1 sets=1 shutdowns=0 store_errors=0
+[15:17:05:532] ../apps/NetServer/ServerSession.cpp@onConnected[69]                                  : TIME=15:17:05:532 UTC IP=127.0.0.1 OP=ACCEPT
+[15:17:05:537] ../net_proto/ProtocolLayers.cpp@logRecv[231]                                         : TIME=15:17:05:537 UTC IP=127.0.0.1 OP=RECV Read
+[15:17:05:545] ../net_store/MessageStore.cpp@get[314]                                               : TIME=15:17:05:545 UTC IP=127.0.0.1 OP=STORE READ MSG=<redacted len=8>
+[15:17:05:546] ../net_proto/ProtocolLayers.cpp@operator()[59]                                       : TIME=15:17:05:546 UTC IP=127.0.0.1 OP=READ MSG=<redacted len=8>
+[15:17:05:547] ../net_handler/NetTransport.cpp@operator()[93]                                       : TIME=15:17:05:547 UTC IP=127.0.0.1 OP=DISCONNECT
+[15:17:08:259] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=3 rejected=0 reads=2 sets=1 shutdowns=0 store_errors=0
+[15:17:13:259] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=3 rejected=0 reads=2 sets=1 shutdowns=0 store_errors=0
+[15:17:13:377] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics stop accepts=3 rejected=0 reads=2 sets=1 shutdowns=0 store_errors=0

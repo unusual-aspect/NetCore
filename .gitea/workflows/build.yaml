@@ -1,0 +1,140 @@
+name: CI-Build
+on: [push]
+
+jobs:
+  compile-test:
+    runs-on: ci-builder
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+
+      - name: Static Analysis (Cppcheck)
+        run: |
+          cppcheck --enable=all,style,performance,portability,information,warning,unusedFunction,missingInclude,security \
+                   --inline-suppr \
+                   --suppress=missingIncludeSystem \
+                   --template="{severity}: {message} ({file}:{line})" \
+                   src apps tests 2> cppcheck_report.txt || true
+
+      - name: Complexity Analysis (Lizard)
+        run: lizard src apps tests --CCN --warnings --csv > lizard_result.txt
+
+      - name: Linux Build, Test & Coverage
+        run: |
+          # Build
+          cmake --preset ci-linux -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+          cmake --build out/build/ci-linux
+
+          # Test
+          cd out/build/ci-linux
+          ctest --output-on-failure --timeout 300 | tee test_output.txt
+
+          # Coverage JSON + branch + function
+          gcovr -r ../../.. \
+                --filter "src|apps|tests" \
+                --branches \
+                --functions \
+                --json-summary ../../../ci/coverage-summary.json \
+                --json ../../../ci/coverage-full.json
+
+      - name: Windows Build (Cross-compile)
+        run: |
+          cmake --preset ci-win
+          cmake --build out/build/ci-win
+
+      - name: Generate CI JSON Summary and Badge
+        if: always()
+        run: |
+          mkdir -p ci
+
+          # Coverage
+          COVERAGE=$(jq '.line_percent // 0' ci/coverage-summary.json | cut -d'.' -f1)
+          BRANCH_COVERAGE=$(jq '.branch_percent // 0' ci/coverage-summary.json | cut -d'.' -f1)
+          FUNC_COVERAGE=$(jq '.function_percent // 0' ci/coverage-summary.json | cut -d'.' -f1)
+
+          # Complexity
+          CCN=$(grep "Average complexity" lizard_result.txt | awk '{print $3}' | cut -d'/' -f1 || echo "0")
+          CCN_MAX=$(grep "Max complexity" lizard_result.txt | awk '{print $3}' || echo "0")
+          CCN_MIN=$(grep "Min complexity" lizard_result.txt | awk '{print $3}' || echo "0")
+
+          # Warnings
+          WARNINGS=$(wc -l < cppcheck_report.txt || echo "0")
+
+          # Tests
+          TOTAL_TESTS=$(grep -c "Test #" test_output.txt || echo "0")
+          FAILED_TESTS=$(grep -c "Failed" test_output.txt || echo "0")
+          TEST_DURATION=$(grep -oP "Total Test time: \K[0-9.]+" test_output.txt || echo "0")
+
+          # Git info
+          GIT_SHA=$(git rev-parse --short HEAD)
+          GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Full JSON summary
+          cat > ci-summary.json <<EOF
+          {
+            "timestamp": "$TIMESTAMP",
+            "git": {
+              "sha": "$GIT_SHA",
+              "branch": "$GIT_BRANCH"
+            },
+            "coverage": {
+              "line": $COVERAGE,
+              "branch": $BRANCH_COVERAGE,
+              "function": $FUNC_COVERAGE
+            },
+            "complexity": {
+              "avg": $CCN,
+              "max": $CCN_MAX,
+              "min": $CCN_MIN
+            },
+            "warnings": $WARNINGS,
+            "tests": {
+              "total": $TOTAL_TESTS,
+              "failed": $FAILED_TESTS,
+              "duration_sec": $TEST_DURATION
+            }
+          }
+          EOF
+
+          # -------- BADGE JSONs --------
+
+          # Coverage badge
+          COV_COLOR="red"
+          if [ "$COVERAGE" -ge 90 ]; then COV_COLOR="brightgreen";
+          elif [ "$COVERAGE" -ge 75 ]; then COV_COLOR="yellow"; fi
+          cat > coverage-badge.json <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "coverage",
+            "message": "${COVERAGE}%",
+            "color": "$COV_COLOR"
+          }
+          EOF
+
+          # Complexity badge
+          CMP_COLOR="green"
+          if (( $(echo "$CCN > 15" | bc -l) )); then CMP_COLOR="red";
+          elif (( $(echo "$CCN > 10" | bc -l) )); then CMP_COLOR="yellow"; fi
+          cat > complexity-badge.json <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "complexity",
+            "message": "$CCN",
+            "color": "$CMP_COLOR"
+          }
+          EOF
+
+          # Warnings badge
+          WRN_COLOR="green"
+          if [ "$WARNINGS" -gt 0 ]; then WRN_COLOR="red"; fi
+          cat > warnings-badge.json <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "warnings",
+            "message": "$WARNINGS",
+            "color": "$WRN_COLOR"
+          }
+          EOF

@@ -1,0 +1,4 @@
+[15:21:45:655] ../apps/NetServer/main.cpp@main[39]                                                  : Run 20260812-152145-612 → <cwd>/logs/NetServer-20260812-152145-612-63554.log
+[15:21:45:661] ../net_handler/NetTransport.cpp@listen[142]                                          : Start listen on 127.0.0.1:9555
+[15:21:45:760] ../apps/NetServer/ServerApp.cpp@run[77]                                              : Start NetServer on 127.0.0.1:9555
+[15:21:47:151] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics stop accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0

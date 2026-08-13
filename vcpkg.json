@@ -1,0 +1,20 @@
+{
+  "name": "net-project",
+  "version-string": "0.1.0",
+  "builtin-baseline": "e5a1490e1409d175932ef6014519e9ae149ddb7c",
+  "dependencies": [
+    "usockets",
+    "magic-enum",
+    "libuv",
+    "cxxopts",
+    "gtest",
+    "sqlite3",
+    {
+      "name": "reflectcpp",
+      "features": [
+        "msgpack",
+        "xml"
+      ]
+    }
+  ]
+}

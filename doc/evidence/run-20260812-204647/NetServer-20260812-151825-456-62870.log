@@ -1,0 +1,18 @@
+[15:18:25:466] ../apps/NetServer/main.cpp@main[39]                                                  : Run 20260812-151825-456 → <cwd>/logs/NetServer-20260812-151825-456-62870.log
+[15:18:25:467] ../net_handler/NetTransport.cpp@listen[142]                                          : Start listen on 127.0.0.1:9555
+[15:18:25:500] ../apps/NetServer/ServerApp.cpp@run[77]                                              : Start NetServer on 127.0.0.1:9555
+[15:18:30:501] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:18:35:501] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:18:40:501] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:18:45:502] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:18:50:502] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:18:55:502] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:19:00:503] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:19:05:503] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:19:10:503] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:19:15:504] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:19:20:504] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:19:25:504] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:19:30:504] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:19:35:505] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics flush accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0
+[15:19:39:716] ../apps/NetServer/ServerApp.cpp@logMetrics[28]                                       : Metrics stop accepts=0 rejected=0 reads=0 sets=0 shutdowns=0 store_errors=0

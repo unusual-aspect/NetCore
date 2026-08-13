@@ -1,0 +1,39 @@
+# Example systemd unit for NetServer
+#
+# Adjust User, paths, and flags for your host.
+# Install binary via: cmake --install <build-dir>
+# WorkingDirectory must be writable: message.db and logs/ are created here.
+#
+#   sudo mkdir -p /var/lib/netserver
+#   sudo useradd --system --home /var/lib/netserver --shell /usr/sbin/nologin netserver
+#   sudo chown netserver:netserver /var/lib/netserver
+#   sudo cp doc/netserver.service.example /etc/systemd/system/netserver.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now netserver
+
+[Unit]
+Description=NetProject shared-message server
+After=network.target
+
+[Service]
+Type=simple
+User=netserver
+WorkingDirectory=/var/lib/netserver
+ExecStart=/usr/local/bin/NetServer --bind 127.0.0.1 --db /var/lib/netserver/message.db --log-retain 100000
+Restart=on-failure
+RestartSec=2
+
+# Graceful stop: SIGTERM → NetTransport::requestStopFromSignal() → UsRuntime::stop()
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+# Host hardening (data dir must stay writable)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/netserver
+LimitNOFILE=1024
+
+[Install]
+WantedBy=multi-user.target

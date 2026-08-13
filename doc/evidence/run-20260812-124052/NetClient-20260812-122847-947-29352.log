@@ -1,0 +1,19 @@
+[12:28:47:953] ../apps/NetClient/main.cpp@main[16]                                                  : Run 20260812-122847-947 → logs/NetClient-20260812-122847-947-29352.log
+[12:28:47:953] ../apps/NetClient/ClientApp.cpp@run[35]                                              : Command Set: lol
+[12:28:47:953] ../apps/NetClient/ClientApp.cpp@runOnce[56]                                          : Connecting to 127.0.0.1:9555
+[12:28:47:954] ../net_handler/NetTransport.cpp@connect[112]                                         : Connect 127.0.0.1:9555
+[12:28:47:954] ../net_handler/UsRuntime.cpp@on_connect_error[137]                                   : Cannot connect — the outbound TCP handshake failed.
+[12:28:47:955] ../net_handler/NetTransport.cpp@operator()[81]                                       : connect failed
+[12:28:47:955] ../apps/NetClient/ClientApp.cpp@operator()[53]                                       : connect failed
+[12:28:47:955] ../net_handler/NetTransport.cpp@operator()[67]                                       : TIME=12:28:47:955 UTC IP=unknown OP=DISCONNECT
+[12:28:47:955] ../apps/NetClient/ClientApp.cpp@runOnce[63]                                          : Exit 1
+[12:28:47:955] ../apps/NetClient/ClientApp.cpp@runWithRecover[80]                                   : Server is not answering — waiting 5 seconds for the service to restart, then one reconnect.
+[12:28:52:956] ../apps/NetClient/ClientApp.cpp@runWithRecover[83]                                   : Retrying once → 127.0.0.1:9555
+[12:28:52:958] ../apps/NetClient/ClientApp.cpp@runOnce[56]                                          : Connecting to 127.0.0.1:9555
+[12:28:52:959] ../net_handler/NetTransport.cpp@connect[112]                                         : Connect 127.0.0.1:9555
+[12:28:52:960] ../net_handler/UsRuntime.cpp@on_connect_error[137]                                   : Cannot connect — the outbound TCP handshake failed.
+[12:28:52:961] ../net_handler/NetTransport.cpp@operator()[81]                                       : connect failed
+[12:28:52:962] ../apps/NetClient/ClientApp.cpp@operator()[53]                                       : connect failed
+[12:28:52:963] ../net_handler/NetTransport.cpp@operator()[67]                                       : TIME=12:28:52:963 UTC IP=unknown OP=DISCONNECT
+[12:28:52:964] ../apps/NetClient/ClientApp.cpp@runOnce[63]                                          : Exit 1
+[12:28:52:966] ../apps/NetClient/ClientApp.cpp@runWithRecover[89]                                   : Cannot reach the server after one retry — it is not available. Stopping.
