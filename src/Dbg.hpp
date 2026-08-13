@@ -261,7 +261,9 @@ inline void maybeRotateDbgFileLocked() {
     }
     const std::string today = utc::date_id();
     const bool new_day = !logDayUtc().empty() && logDayUtc() != today;
+    // cppcheck-suppress unsignedLessThanZero // broken value-flow, kDbgLogMaxBytes is 10u * 1024u * 1024u, not a signed/zero check.
     const bool size_hit = logBytesWritten() >= kDbgLogMaxBytes;
+    // cppcheck-suppress knownConditionTrueFalse // cppcheck treats logBytesWritten()'s static as always its initial 0 and doesn't see it mutated in printDbg.
     if (!new_day && !size_hit) {
         return;
     }

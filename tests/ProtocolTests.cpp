@@ -483,7 +483,9 @@ TEST(ProtocolLayers, StoreFailureMapsToError) {
     sent.clear();
     EXPECT_TRUE(stack.dispatch(NetProtocol(Opcode::Set, "x")));
     ASSERT_EQ(sent.size(), 1u);
+    // cppcheck-suppress containerOutOfBounds // cppcheck doesn't model the send lambda populating sent before the ASSERT_EQ guard runs.
     EXPECT_EQ(sent[0].getMsgType(), Opcode::Error);
+    // cppcheck-suppress containerOutOfBounds // cppcheck doesn't model the send lambda populating sent before the ASSERT_EQ guard runs.
     EXPECT_EQ(sent[0].getMsgData(), kStoreUnavailableMsg);
 }
 
