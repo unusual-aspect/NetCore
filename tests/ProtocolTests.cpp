@@ -473,6 +473,7 @@ TEST(ProtocolLayers, StoreFailureMapsToError) {
             [](std::string_view, auto done) {
                 done(false, "disk full");
             },
+        .onShutdown = {},
     });
 
     EXPECT_TRUE(stack.dispatch(NetProtocol(Opcode::Read)));
@@ -499,6 +500,8 @@ TEST(ProtocolLayers, UnsupportedMajorGetsError) {
                 return true;
             },
         .onRead = [](auto done) { done(true, "should-not-run"); },
+        .onSet = {},
+        .onShutdown = {},
     });
 
     auto frame = rawFrame(kFrameMagic, versionToWire("2.0"), envelopeJson("Read", 7, ""));
@@ -529,6 +532,8 @@ TEST(ProtocolLayers, ReadWithSqlParamsStillReturnsStoreBody) {
                 ++reads;
                 done(true, "from-store");
             },
+        .onSet = {},
+        .onShutdown = {},
     });
 
     EXPECT_TRUE(stack.dispatch(NetProtocol(Opcode::Read, "'; DROP TABLE message;--", 4)));
@@ -549,11 +554,13 @@ TEST(ProtocolLayers, EmptySetIsIgnored) {
                 sent.push_back(msg);
                 return true;
             },
+        .onRead = {},
         .onSet =
             [&](std::string_view, auto done) {
                 set_called = true;
                 done(true, {});
             },
+        .onShutdown = {},
     });
 
     EXPECT_TRUE(stack.dispatch(NetProtocol(Opcode::Set, {}, 9)));
@@ -574,11 +581,13 @@ TEST(ProtocolLayers, OversizeSetMapsToError) {
                 sent.push_back(msg);
                 return true;
             },
+        .onRead = {},
         .onSet =
             [&](std::string_view, auto done) {
                 set_called = true;
                 done(true, {});
             },
+        .onShutdown = {},
     });
 
     const std::string huge(kMaxMessageBytes + 1, 'Y');
