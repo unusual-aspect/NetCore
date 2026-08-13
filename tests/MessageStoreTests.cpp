@@ -167,10 +167,89 @@ TEST(MessageStore, SqlInjectionPayloadsStayLiteralData) {
     sqlite3_close(db);
 }
 
-TEST(MessageStore, RejectsOversizeMessage) {
-    const auto path = tempDbPath("toobig");
+TEST(MessageStore, EmptyPutDoesNotInsert) {
+    const auto path = tempDbPath("empty-put");
+    {
+        MessageStore store(path.string(), 100);
+        EXPECT_EQ(store.put("", "127.0.0.1"), 0);
+        EXPECT_FALSE(store.get("127.0.0.1").has_value());
+        store.put("keep-me", "127.0.0.1");
+        EXPECT_EQ(store.put("", "127.0.0.1"), 0);
+        const auto value = store.get("127.0.0.1");
+        ASSERT_TRUE(value.has_value());
+        EXPECT_EQ(*value, "keep-me");
+        EXPECT_EQ(store.accessLogCount(), 3u);  // two READs + one PUT; empty puts are not logged
+    }
     MessageStore store(path.string(), 100);
-    const std::string huge(kMaxMessageBytes + 1, 'X');
-    EXPECT_THROW(store.put(huge, "127.0.0.1"), std::runtime_error);
-    EXPECT_FALSE(store.get("127.0.0.1").has_value());
+    const auto value = store.get("127.0.0.1");
+    ASSERT_TRUE(value.has_value());
+    EXPECT_EQ(*value, "keep-me");
+
+    sqlite3* db = nullptr;
+    ASSERT_EQ(sqlite3_open_v2(path.string().c_str(), &db, SQLITE_OPEN_READONLY, nullptr), SQLITE_OK);
+    sqlite3_stmt* statement = nullptr;
+    ASSERT_EQ(sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM access_log WHERE op='PUT';", -1, &statement, nullptr),
+              SQLITE_OK);
+    ASSERT_EQ(sqlite3_step(statement), SQLITE_ROW);
+    EXPECT_EQ(sqlite3_column_int(statement, 0), 1);
+    sqlite3_finalize(statement);
+    ASSERT_EQ(sqlite3_prepare_v2(db, "SELECT length(body), body FROM message WHERE id=1;", -1, &statement, nullptr),
+              SQLITE_OK);
+    ASSERT_EQ(sqlite3_step(statement), SQLITE_ROW);
+    EXPECT_EQ(sqlite3_column_int(statement, 0), 7);
+    EXPECT_STREQ(reinterpret_cast<const char*>(sqlite3_column_text(statement, 1)), "keep-me");
+    sqlite3_finalize(statement);
+    sqlite3_close(db);
+}
+
+TEST(MessageStore, WhitespaceOnlyPutIsStored) {
+    const auto path = tempDbPath("whitespace-put");
+    MessageStore store(path.string(), 100);
+    store.put(" ", "127.0.0.1");
+    const auto value = store.get("127.0.0.1");
+    ASSERT_TRUE(value.has_value());
+    EXPECT_EQ(*value, " ");
+}
+
+TEST(MessageStore, AccessLogRecordsTimestampPeerOpDetail) {
+    const auto path = tempDbPath("audit-cols");
+    {
+        MessageStore store(path.string(), 100);
+        store.put("", "10.1.2.3");
+        store.put("payload-body", "10.1.2.3");
+        ASSERT_TRUE(store.get("10.1.2.3").has_value());
+    }
+
+    sqlite3* db = nullptr;
+    ASSERT_EQ(sqlite3_open_v2(path.string().c_str(), &db, SQLITE_OPEN_READONLY, nullptr), SQLITE_OK);
+    sqlite3_stmt* statement = nullptr;
+    ASSERT_EQ(sqlite3_prepare_v2(db,
+                    "SELECT ts, peer, op, detail FROM access_log ORDER BY id ASC;",
+                    -1, &statement, nullptr),
+              SQLITE_OK);
+
+    ASSERT_EQ(sqlite3_step(statement), SQLITE_ROW);
+    EXPECT_GT(sqlite3_column_int64(statement, 0), 0);
+    EXPECT_STREQ(reinterpret_cast<const char*>(sqlite3_column_text(statement, 1)), "10.1.2.3");
+    EXPECT_STREQ(reinterpret_cast<const char*>(sqlite3_column_text(statement, 2)), "PUT");
+    EXPECT_STREQ(reinterpret_cast<const char*>(sqlite3_column_text(statement, 3)), "payload-body");
+
+    ASSERT_EQ(sqlite3_step(statement), SQLITE_ROW);
+    EXPECT_GT(sqlite3_column_int64(statement, 0), 0);
+    EXPECT_STREQ(reinterpret_cast<const char*>(sqlite3_column_text(statement, 1)), "10.1.2.3");
+    EXPECT_STREQ(reinterpret_cast<const char*>(sqlite3_column_text(statement, 2)), "READ");
+    EXPECT_EQ(sqlite3_column_type(statement, 3), SQLITE_NULL);
+
+    EXPECT_EQ(sqlite3_step(statement), SQLITE_DONE);
+    sqlite3_finalize(statement);
+    sqlite3_close(db);
+}
+
+TEST(MessageStore, OpenFailsWhenPathIsADirectory) {
+    const auto path = std::filesystem::temp_directory_path() / "netstore-not-a-file";
+    std::error_code error;
+    std::filesystem::remove_all(path, error);
+    ASSERT_TRUE(std::filesystem::create_directory(path));
+    EXPECT_THROW(MessageStore(path.string(), 100), std::runtime_error);
+    std::filesystem::remove_all(path, error);
 }

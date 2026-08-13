@@ -23,6 +23,8 @@ inline constexpr std::size_t kMaxConnections = 128;
 inline constexpr std::size_t kMaxUnsentBytes = 4u * 1024u * 1024u;  // 4 MiB per socket
 inline constexpr std::size_t kMaxTotalReceiveBytes = 16u * 1024u * 1024u;  // all sessions
 inline constexpr unsigned kIdleTimeoutSec = 120;  // incomplete-frame idle only; 0 disables
+// One-shot client: close if no reply (Ok/Error/goodbye). Quiet --live is not armed.
+inline constexpr unsigned kOneShotReplyTimeoutSec = 3;
 inline constexpr std::uint64_t kDefaultAccessLogMaxRows = 100000;
 inline constexpr std::size_t kMaxAccessLogDetailBytes = 4096;  // PUT detail truncate
 inline constexpr std::size_t kMaxMessageBytes = 1u * 1024u * 1024u;  // Set body / store

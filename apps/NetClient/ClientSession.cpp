@@ -1,6 +1,8 @@
 #include "ClientSession.hpp"
 
 #include "Dbg.hpp"
+#include "NetDefaults.hpp"
+#include "UsRuntime.hpp"
 
 ClientSession::ClientSession() {
     protocol_stack_ = protocol::makeClientStack({
@@ -115,6 +117,9 @@ bool ClientSession::sendRequest() {
     request_sent_ = sendData(*request);
     if (!request_sent_) {
         DBG("Cannot send the request — socket write failed, so the server never got it.");
+    } else if (!keep_alive_) {
+        // Closed-port / black-hole peers must not sit in us_loop_run forever.
+        UsRuntime::armIdleTimeout(nativeSocket(), kOneShotReplyTimeoutSec);
     }
     return request_sent_;
 }

@@ -2,6 +2,7 @@
 
 #include "NetProtocol.hpp"
 
+#include <cstdint>
 #include <functional>
 #include <span>
 #include <string>
@@ -28,6 +29,7 @@ public:
     const std::string& peer() const { return peer_ip_; }
     std::size_t receiveBufferedBytes() const { return receive_buffer_.size(); }
     us_socket_t* nativeSocket() const { return socket_; }
+    std::uint64_t sessionId() const { return session_id_; }
 
     virtual void onConnected() {}
     virtual void onDisconnected() {}
@@ -44,6 +46,7 @@ private:
     void bind(us_socket_t* socket, std::string_view peer, std::function<void()> close_socket);
 
     us_socket_t* socket_ = nullptr;             // owned by transport, nulled on close
+    std::uint64_t session_id_ = 0;              // identity; socket pointers are reused
     std::string peer_ip_;
     std::function<void()> close_socket_;        // closes this TCP socket
     std::vector<std::uint8_t> receive_buffer_;  // leftover of an incomplete frame

@@ -101,9 +101,13 @@ If that path is wrong on your machine, edit start.cmd.
 
 Native:
   linux-debug    linux-release
+  linux-asan     ASan + UBSan (Linux/GCC or Clang)
+  linux-tsan     ThreadSanitizer (not combined with ASan)
   win-debug      win-release
 
-CI (presets named for the old template / Gitea workflow — **not verified for this project**; see DECISIONS.md):
+CI (GitHub Actions, `.github/workflows/ci.yml`): linux-debug, linux-asan, linux-tsan.
+
+Leftover template presets (not the GitHub pipeline — see DECISIONS.md):
   ci-linux       Release, x64-linux, VCPKG_INSTALLED_DIR=/opt/vcpkg-linux
   ci-win         MinGW cross, x64-mingw-dynamic
   ci-testing     ci-linux + Debug + coverage flags

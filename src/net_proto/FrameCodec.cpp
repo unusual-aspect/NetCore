@@ -7,6 +7,9 @@
 #include <rfl/json.hpp>
 
 #include <cstdio>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 
 void FrameCodec::writeBe16(std::vector<std::uint8_t>& bytes, std::uint16_t value) {
     bytes.push_back(static_cast<std::uint8_t>((value >> 8) & 0xFF));
@@ -84,7 +87,7 @@ std::optional<NetProtocol> FrameCodec::try_decode(std::span<const std::uint8_t> 
 
     const auto payload_size = readBe32(frame.data() + 2);
     if (payload_size > kMaxPayloadLen) {
-        // Declared length is a lie / attack — do not wait for it.
+        // Declared length is a lie / attack — do not wait for it, do not allocate it.
         DBG("Cannot parse this frame — body claims " + std::to_string(payload_size) +
             " bytes, over the " + std::to_string(kMaxPayloadLen) + " byte wire limit. Not waiting for the rest.");
         if (fatal) {
@@ -102,25 +105,35 @@ std::optional<NetProtocol> FrameCodec::try_decode(std::span<const std::uint8_t> 
 
     const std::string_view body(
         reinterpret_cast<const char*>(frame.data() + kFrameHeaderSize), payload_size);
-    const auto parsed = rfl::json::read<WireEnvelope>(body);
-    if (!parsed) {
-        // Header was fine, body is garbage.
-        DBG("Cannot parse the frame body — bytes after 0xBEEF are not a valid JSON envelope (Type/Seq/Data).");
+
+    // rfl::json::read returns Result on bad input; catch in case it throws.
+    try {
+        const auto parsed = rfl::json::read<WireEnvelope>(body);
+        if (!parsed) {
+            DBG("Cannot parse the frame body — " + parsed.error().what());
+            if (fatal) {
+                *fatal = true;
+            }
+            return std::nullopt;
+        }
+
+        const WireEnvelope& envelope = *parsed;
+        std::string invalid_type;
+        // Unknown Type → Opcode::None, invalid_type keeps the wire string.
+        const Opcode opcode = NetProtocol::typeFromName(envelope.Type, &invalid_type);
+
+        NetProtocol message(opcode, envelope.Data, envelope.Seq);
+        message.version_ = versionFromWire(version_wire);
+        message.invalid_type_ = std::move(invalid_type);
+
+        bytes_consumed = kFrameHeaderSize + payload_size;
+        return message;
+    } catch (const std::exception& error) {
+        DBG(std::string("Cannot parse this frame — envelope parser threw: ") + error.what());
         if (fatal) {
             *fatal = true;
         }
+        bytes_consumed = 0;
         return std::nullopt;
     }
-
-    const WireEnvelope& envelope = *parsed;
-    std::string invalid_type;
-    // Unknown Type → Opcode::None, invalid_type keeps the wire string.
-    const Opcode opcode = NetProtocol::typeFromName(envelope.Type, &invalid_type);
-
-    NetProtocol message(opcode, envelope.Data, envelope.Seq);
-    message.version_ = versionFromWire(version_wire);
-    message.invalid_type_ = std::move(invalid_type);
-
-    bytes_consumed = kFrameHeaderSize + payload_size;
-    return message;
 }

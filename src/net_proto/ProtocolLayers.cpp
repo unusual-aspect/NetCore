@@ -84,6 +84,13 @@ bool parseServerV1(const NetProtocol& data, const ServerHooks& hooks) {
                 }
                 return true;
             }
+            if (data.getMsgData().empty()) {
+                DBG(netdbg::event("SET ignored", peer, "<empty>"));
+                if (hooks.send) {
+                    hooks.send(NetProtocol(Opcode::Ok, {}, data.seq()));
+                }
+                return true;
+            }
             const auto seq = data.seq();
             const auto body = std::string(data.getMsgData());
             auto reply = [hooks, peer, seq, body](bool ok, std::string payload) {

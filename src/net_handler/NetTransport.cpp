@@ -125,11 +125,17 @@ void NetTransport::hookRuntimeCallbacks() {
 }
 
 void NetTransport::bindSession(AbstractNetSession& session, us_socket_t* socket, std::string_view peer) {
-    // Glue this TCP socket onto the session:
-    //   socket_  → sendData() can write
-    //   peer_ip_ → DBG / store audit
-    //   close()  → UsRuntime::close(this socket) → on_close
     session.bind(socket, peer, [socket] { UsRuntime::close(socket); });
+    session.session_id_ = next_session_id_++;
+}
+
+bool NetTransport::hasSession(us_socket_t* socket, std::uint64_t session_id) const {
+    if (!socket) {
+        return false;
+    }
+    const auto found = sessions_by_socket_.find(socket);
+    return found != sessions_by_socket_.end() && found->second &&
+           found->second->sessionId() == session_id;
 }
 
 bool NetTransport::listen(const std::string& host, std::uint16_t port) {

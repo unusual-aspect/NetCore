@@ -14,16 +14,20 @@ ServerSession::ServerSession(StoreWorker& store, NetTransport& transport, bool a
             [this](protocol::ServerHooks::StoreDone done) {
                 const std::string peer_ip = peer();
                 us_socket_t* sock = nativeSocket();
-                store_.get(peer_ip, [this, sock, done = std::move(done)](StoreWorker::GetResult result) mutable {
-                    transport_.post([this, sock, done = std::move(done), result = std::move(result)]() mutable {
-                        if (!transport_.hasSession(sock)) {
+                // Capture transport* + session id, not this: the session can be
+                // destroyed if the client disconnects, and socket pointers are reused.
+                NetTransport* transport = &transport_;
+                const std::uint64_t sid = sessionId();
+                store_.get(peer_ip, [transport, sock, sid, done = std::move(done)](StoreWorker::GetResult result) mutable {
+                    transport->post([transport, sock, sid, done = std::move(done), result = std::move(result)]() mutable {
+                        if (!transport->hasSession(sock, sid)) {
                             return;
                         }
                         if (result.ok) {
-                            ++transport_.metrics().reads;
+                            ++transport->metrics().reads;
                             done(true, result.value.value_or(std::string{}));
                         } else {
-                            ++transport_.metrics().store_errors;
+                            ++transport->metrics().store_errors;
                             done(false, std::move(result.error));
                         }
                     });
@@ -34,16 +38,18 @@ ServerSession::ServerSession(StoreWorker& store, NetTransport& transport, bool a
                 const std::string peer_ip = peer();
                 const std::string body(data);
                 us_socket_t* sock = nativeSocket();
-                store_.put(body, peer_ip, [this, sock, done = std::move(done)](StoreWorker::PutResult result) mutable {
-                    transport_.post([this, sock, done = std::move(done), result = std::move(result)]() mutable {
-                        if (!transport_.hasSession(sock)) {
+                NetTransport* transport = &transport_;
+                const std::uint64_t sid = sessionId();
+                store_.put(body, peer_ip, [transport, sock, sid, done = std::move(done)](StoreWorker::PutResult result) mutable {
+                    transport->post([transport, sock, sid, done = std::move(done), result = std::move(result)]() mutable {
+                        if (!transport->hasSession(sock, sid)) {
                             return;
                         }
                         if (result.ok) {
-                            ++transport_.metrics().sets;
+                            ++transport->metrics().sets;
                             done(true, {});
                         } else {
-                            ++transport_.metrics().store_errors;
+                            ++transport->metrics().store_errors;
                             done(false, std::move(result.error));
                         }
                     });
@@ -58,7 +64,10 @@ ServerSession::ServerSession(StoreWorker& store, NetTransport& transport, bool a
                 // Client asked to stop: server tells every other live session goodbye first.
                 transport_.broadcast(NetProtocol(Opcode::Shutdown, "server is shutting down"), this);
                 sendData(NetProtocol(Opcode::Ok, {}, request.seq()));
-                transport_.stop();
+                // Do not stop() here: that closes this socket and destroys *this
+                // while parseNetProtocol / on_data is still on the stack.
+                NetTransport* transport = &transport_;
+                transport->post([transport] { transport->stop(); });
                 return true;
             },
     });

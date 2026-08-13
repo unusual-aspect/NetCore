@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "AbstractNetSession.hpp"
+#include "Dbg.hpp"
 #include "FrameCodec.hpp"
 #include "NetDefaults.hpp"
 #include "NetProtocol.hpp"
@@ -222,10 +223,51 @@ TEST(ProtocolInvalid, InvalidJsonIsFatal) {
 }
 
 TEST(ProtocolInvalid, EmptyBodyIsFatal) {
+    // Zero-length wire payload (no JSON). Not the same as Set with empty Data.
     const auto frame = rawFrame(kFrameMagic, {});
     bool fatal = false;
     EXPECT_FALSE(decodeAll(frame, &fatal).has_value());
     EXPECT_TRUE(fatal);
+}
+
+TEST(ProtocolInvalid, ZeroDeclaredPayloadLengthIsFatal) {
+    const auto frame = rawFrameLen(kFrameMagic, 0, {});
+    ASSERT_EQ(frame.size(), kFrameHeaderSize);
+    bool fatal = false;
+    std::size_t consumed = 99;
+    const auto decoded = NetProtocol::decode(frame, consumed, &fatal);
+    EXPECT_FALSE(decoded.has_value());
+    EXPECT_TRUE(fatal);
+    EXPECT_EQ(consumed, 0u);
+}
+
+TEST(ProtocolInvalid, MessageBodyMayContainBraces) {
+    const std::string json = R"({"Type":"Set","Seq":1,"Data":"{{{{[[[["})";
+    bool fatal = true;
+    const auto decoded = decodeAll(rawFrame(kFrameMagic, json), &fatal);
+    ASSERT_TRUE(decoded.has_value());
+    EXPECT_FALSE(fatal);
+    EXPECT_EQ(decoded->getMsgType(), Opcode::Set);
+    EXPECT_EQ(decoded->getMsgData(), "{{{{[[[[");
+}
+
+TEST(DbgEvent, FormatIsStableAndRedactsByDefault) {
+    const bool previous = netdbg::isVerbose();
+    netdbg::setVerbose(true);
+    const auto verbose = netdbg::event("READ", "127.0.0.1", "hello");
+    EXPECT_NE(verbose.find("TIME="), std::string::npos);
+    EXPECT_NE(verbose.find(" UTC"), std::string::npos);
+    EXPECT_NE(verbose.find("IP=127.0.0.1"), std::string::npos);
+    EXPECT_NE(verbose.find("OP=READ"), std::string::npos);
+    EXPECT_NE(verbose.find("MSG=hello"), std::string::npos);
+
+    netdbg::setVerbose(false);
+    const auto redacted = netdbg::event("SET", "10.0.0.1", "secret");
+    EXPECT_NE(redacted.find("IP=10.0.0.1"), std::string::npos);
+    EXPECT_NE(redacted.find("OP=SET"), std::string::npos);
+    EXPECT_NE(redacted.find("MSG=<redacted len=6>"), std::string::npos);
+    EXPECT_EQ(redacted.find("secret"), std::string::npos);
+    netdbg::setVerbose(previous);
 }
 
 TEST(ProtocolInvalid, TruncatedJsonIsFatal) {
@@ -470,6 +512,56 @@ TEST(ProtocolLayers, UnsupportedMajorGetsError) {
     EXPECT_EQ(sent[0].seq(), 7u);
 }
 
+TEST(ProtocolLayers, ReadWithSqlParamsStillReturnsStoreBody) {
+    std::vector<NetProtocol> sent;
+    int reads = 0;
+    auto stack = protocol::makeServerStack({
+        .peer = [] { return std::string{"127.0.0.1"}; },
+        .send =
+            [&](const NetProtocol& msg) {
+                sent.push_back(msg);
+                return true;
+            },
+        .onRead =
+            [&](auto done) {
+                ++reads;
+                done(true, "from-store");
+            },
+    });
+
+    EXPECT_TRUE(stack.dispatch(NetProtocol(Opcode::Read, "'; DROP TABLE message;--", 4)));
+    EXPECT_EQ(reads, 1);
+    ASSERT_EQ(sent.size(), 1u);
+    EXPECT_EQ(sent[0].getMsgType(), Opcode::Ok);
+    EXPECT_EQ(sent[0].getMsgData(), "from-store");
+    EXPECT_EQ(sent[0].seq(), 4u);
+}
+
+TEST(ProtocolLayers, EmptySetIsIgnored) {
+    std::vector<NetProtocol> sent;
+    bool set_called = false;
+    auto stack = protocol::makeServerStack({
+        .peer = [] { return std::string{"127.0.0.1"}; },
+        .send =
+            [&](const NetProtocol& msg) {
+                sent.push_back(msg);
+                return true;
+            },
+        .onSet =
+            [&](std::string_view, auto done) {
+                set_called = true;
+                done(true, {});
+            },
+    });
+
+    EXPECT_TRUE(stack.dispatch(NetProtocol(Opcode::Set, {}, 9)));
+    EXPECT_FALSE(set_called);
+    ASSERT_EQ(sent.size(), 1u);
+    EXPECT_EQ(sent[0].getMsgType(), Opcode::Ok);
+    EXPECT_TRUE(sent[0].getMsgData().empty());
+    EXPECT_EQ(sent[0].seq(), 9u);
+}
+
 TEST(ProtocolLayers, OversizeSetMapsToError) {
     std::vector<NetProtocol> sent;
     bool set_called = false;
@@ -500,6 +592,11 @@ TEST(ProtocolLayers, MakeClientRequestRejectsOversizeSet) {
     const std::string huge(kMaxMessageBytes + 1, 'Z');
     EXPECT_FALSE(protocol::makeClientRequest(Opcode::Set, huge).has_value());
     EXPECT_TRUE(protocol::makeClientRequest(Opcode::Set, "ok").has_value());
+    // Client may still send empty Data; the server ignores the insert.
+    const auto empty_set = protocol::makeClientRequest(Opcode::Set, {});
+    ASSERT_TRUE(empty_set.has_value());
+    EXPECT_EQ(empty_set->getMsgType(), Opcode::Set);
+    EXPECT_TRUE(empty_set->getMsgData().empty());
 }
 
 TEST(ProtocolStack, V1CappedAtProtoMajor) {

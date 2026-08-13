@@ -22,13 +22,11 @@ There is no TLS, no auth, no multi-document store. That is intentional (see belo
 
 ## CI template leftover
 
-**We keep:** `.gitea/workflows/build.yaml`, `Dockerfile.base`, `Dockerfile.builder`, and the `ci-linux` / `ci-win` / `ci-testing` presets in the tree (Dockerfiles for optional container builds; workflow/presets for historical reference).
+**We use:** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on Ubuntu with presets `linux-debug`, `linux-asan` (ASan+UBSan), and `linux-tsan`. Each job configures, builds, and runs unit + integration tests (including `ProtocolStressTests`).
 
-**They are not:** a tested continuous-integration setup for **this** NetProject. The Gitea workflow and `ci-*` presets were carried over from a **previous project template** and have not been re-validated against the current apps, hardening CLI, MessageStore/integration tests, or docs.
+**We keep but do not rely on:** `.gitea/workflows/build.yaml`, `Dockerfile.base`, `Dockerfile.builder`, and the `ci-linux` / `ci-win` / `ci-testing` presets (Dockerfiles for optional container builds; Gitea workflow/presets for historical reference). See `.gitea/workflows/README.md`.
 
-**Prefer:** local `cmake --preset linux-debug|win-debug` + `ctest` until someone rewires and verifies the workflow here.
-
-**Constraint:** hardening work explicitly left CI out of scope. Do not assume cppcheck/`|| true`, gcovr paths, or MinGW cross in the workflow match what you just changed.
+**Prefer:** GitHub Actions, or local `cmake --preset linux-debug|linux-asan|linux-tsan|win-debug` + `ctest`.
 
 ---
 
@@ -49,7 +47,7 @@ peer gate     PeerUtils          isLoopbackPeer() for Shutdown
 
 Sessions never call `us_*` directly. `NetTransport` owns the loop and maps sockets. Protocol code never opens SQLite. Apps (`ServerApp`, `ClientApp` + thin `ServerSession` / `ClientSession`) wire store/transport/CLI hooks into `protocol::makeServerStack` / `makeClientStack`; they are not a second protocol implementation.
 
-Server Read/Set: `ServerSession` enqueues on `StoreWorker`; the worker runs `MessageStore`; completion `post()`s back onto the uSockets thread (and skips send if the accept socket already closed) before `Opcode::Ok` / `Error`. Slow disk or `busy_timeout` no longer freezes accepts.
+Server Read/Set: `ServerSession` enqueues on `StoreWorker`; the worker runs `MessageStore`; completion `post()`s back onto the uSockets thread (and skips send if the accept socket already closed) before `Opcode::Ok` / `Error`. Slow disk or `busy_timeout` no longer freezes accepts. Completion lambdas capture `NetTransport*` + socket, **not** `ServerSession*`: the session can be destroyed if the client disconnects before SQLite finishes.
 
 That split exists so a wire change stays in `src/net_proto`, a listen/connect change stays in `src/net_handler`, and a schema change stays in `src/net_store`.
 
@@ -113,7 +111,7 @@ Pinned in `vcpkg.json`. Do not add a second library that solves the same job.
 
 **Not PostgreSQL / MySQL:** this process is the service. A server DB would add ops (listen, users, migrations) for one row.
 
-**Not in-memory only:** restart must keep the last Set. The cache is a hot path, not the source of truth.
+**Warm cache:** constructor loads `message.id=1`. A zero-length BLOB makes `sqlite3_column_blob` return NULL; if the row exists, `has_cache_` is set. New empty Sets are not inserted (protocol and `put` no-op).
 
 **Server I/O thread:** do not call `MessageStore` from the uSockets callbacks. `StoreWorker` owns a queue + one thread; completions hop back with `NetTransport::post` before send.
 
@@ -136,6 +134,10 @@ Pinned in `vcpkg.json`. Do not add a second library that solves the same job.
 **It does:** stop a pasted/typed gigabyte from blowing RAM, SQLite, or the TCP write path — even without TLS.
 
 **Not unbounded getline + hope the peer is polite:** stdin is read with a hard cap; surplus bytes to EOL are discarded.
+
+**Not a JSON nesting / depth cap:** `kMaxMessageBytes` / `kMaxPayloadLen` already bound RAM and parse cost. Envelope validity is the codec (`rfl::json::read` today).
+
+**Not storing an empty Set:** empty `Data` is `Ok` and a no-op — the live row and `access_log` stay as they were.
 
 ### SQLite — no SQL injection (DB integrity without TLS)
 
@@ -161,7 +163,7 @@ TLS is still out of scope. Hostile **message bodies** and **peer strings** must 
 
 **It does:** argv/hardening edge cases; **invalid frames** (bad magic, oversize length, truncated header, unknown `Type`, Seq round-trip, stack Vx/V1); SQLite put/get/retention/SQL-injection-as-data; and real TCP app scenarios (Shutdown gate, max connections, recover, concurrent Sets, live, restart). Protocol unit tests drive `AbstractNetSession::feed` with no socket; integration tests spin `ServerApp` / `ClientApp`.
 
-**Not Catch2 / a main() that prints "ok":** gtest is already in the vcpkg set and matches `ctest`.
+**Not Catch2 / a main() that prints "ok":** gtest is already in the vcpkg set and matches `ctest`. Test binaries use an in-tree `tests/test_main.cpp` (not `gtest_main` as a DLL) so `TEST()` registrars and `RUN_ALL_TESTS()` share one `UnitTest` instance. On Windows vcpkg's gtest is a DLL, so test targets also define `GTEST_LINKED_AS_SHARED_LIBRARY`.
 
 ---
 
@@ -273,15 +275,15 @@ Production-oriented defaults that do **not** add TLS or auth. Trusted-network as
 
 **Trade-off:** legitimate bursts above the cap look like failures — raise the constants if you have a measured need. Idle granularity follows uSockets (~4 s).
 
-### No in-process rate limit / DDoS mitigation
+### No in-process DDoS / network-abuse protection
 
-**We do not:** throttle Read/Set per peer, token-bucket QPS, SYN cookies, or other application-layer DDoS controls.
+**Not covered in this code:** DDoS, connection floods beyond the local accept cap, per-IP rate limits, SYN cookies, bot/abuse scoring, or other network-abuse systems. Size caps (`kMaxMessageBytes` / `kMaxPayloadLen`) and `kMaxConnections` only bound *this process*. They are not a DDoS product.
 
-**Why:** this process is meant to sit on loopback or behind a reverse proxy / host firewall / network ACL that already rate-limits and hides the port. Duplicating that here would add policy knobs without replacing edge protection.
+**Must run behind a provisioned edge:** production (and any non-loopback bind) must sit under a proxy / load balancer / WAF / host firewall that already owns volume protection, TLS termination if needed, and hiding of port `9555`. Do not put the raw listener on an untrusted network and expect `NetServer` to absorb floods.
 
-**Operators:** expose only via a proxy (or keep `--bind 127.0.0.1`). Do not put the raw `9555` listener on an untrusted network and expect the binary to absorb floods.
+**Why not in-process:** duplicating token-buckets and SYN policy here would add knobs without replacing the edge. Loopback (`--bind 127.0.0.1`, the default) is the lab path; a provisioned proxy is the deployed path.
 
-**Not a substitute for TLS/auth** (still out of scope) — this is only about where volume protection lives.
+**Not a substitute for TLS/auth** (still out of scope).
 
 ### Signals (`SIGINT` / `SIGTERM`)
 
@@ -376,7 +378,7 @@ Production-oriented defaults that do **not** add TLS or auth. Trusted-network as
 | Second persistence (files next to SQLite) | Two sources of truth; audit and body must commit together |
 | Extra vcpkg JSON library | `WireEnvelope` already serializes |
 | Asio next to uSockets | Two loops, two thread rules |
-| Text / MOTD line protocol | Breaks framing and versioning; the wire is `0xBEEF` |
+| Text line protocol | Breaks framing and versioning; the wire is `0xBEEF` |
 | Retry Shutdown | Kills the instance that just came back |
 | Write the socket from stdin | uSockets is loop-thread only — use `post()` |
 | `char*` / short names (`rt_`, `s`) on new code | Sessions, peers, and DBG lines need readable names |
@@ -395,7 +397,7 @@ Production-oriented defaults that do **not** add TLS or auth. Trusted-network as
 | Accept unbounded Set bodies / frame lengths | Blows RAM, SQLite, and the write queue — enforce `kMaxMessageBytes` / `kMaxPayloadLen` |
 | Let DBG grow one file forever on a long-lived server | Rotate per UTC day (+ size) and prune old segments |
 | Run MessageStore get/put on the uSockets thread | Disk stalls freeze all clients — use `StoreWorker` queue |
-| Add in-process Read/Set rate limits “for DDoS” | Edge/proxy owns volume protection; document, don’t duplicate |
+| Add in-process Read/Set rate limits “for DDoS” | DDoS/network abuse is out of scope here — provision a proxy in front |
 | Skip `access_log` for health Reads | Probes are audit data; retention already bounds growth |
 | Put SQLite / exception text in Opcode::Error Data | Peers only get `store unavailable`; detail stays in DBG |
 | Run concurrent Sets without the message-Set lock | Torn writes / races — queue + `message_set_mutex_` + store mutex |

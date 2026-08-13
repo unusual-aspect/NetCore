@@ -110,12 +110,16 @@ MessageStore::MessageStore(const std::string& path, std::uint64_t access_log_max
     }
     const int step = sqlite3_step(select_statement);
     if (step == SQLITE_ROW) {
-        const auto* blob = static_cast<const char*>(sqlite3_column_blob(select_statement, 0));
+        // Zero-length BLOB: sqlite3_column_blob() returns NULL. The row still exists
+        // (empty Set must round-trip across restart, distinct from never-set).
         const int byte_count = sqlite3_column_bytes(select_statement, 0);
-        if (blob && byte_count >= 0) {
+        const auto* blob = static_cast<const char*>(sqlite3_column_blob(select_statement, 0));
+        if (byte_count > 0 && blob != nullptr) {
             cache_.assign(blob, static_cast<std::size_t>(byte_count));
-            has_cache_ = true;
+        } else {
+            cache_.clear();
         }
+        has_cache_ = true;
     } else if (step != SQLITE_DONE) {
         const std::string error_message = sqlite3_errmsg(db_);
         sqlite3_finalize(select_statement);
@@ -218,6 +222,10 @@ std::uint64_t MessageStore::accessLogCount() {
 }
 
 std::int64_t MessageStore::put(std::string_view body, std::string_view peer) {
+    if (body.empty()) {
+        DBG(netdbg::event("STORE PUT ignored", peer, "<empty>"));
+        return 0;
+    }
     if (exceedsMaxMessage(body.size())) {
         throw std::runtime_error("message too large");
     }

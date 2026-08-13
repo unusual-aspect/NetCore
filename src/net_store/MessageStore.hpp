@@ -16,8 +16,9 @@ struct sqlite3;
 // exec() is literals only. Authorizer denies ATTACH/DROP/ALTER/…. Not a TLS
 // substitute — protects the DB engine from hostile message content.
 //
-// put(): BEGIN IMMEDIATE → upsert body+ts → INSERT access_log PUT → COMMIT.
-// Both rows get the same utc::now_ns(). Then cache_ is updated.
+// put(): empty body is a no-op (no row, no audit). Otherwise BEGIN IMMEDIATE →
+// upsert body+ts → INSERT access_log PUT → COMMIT. Both rows get the same
+// utc::now_ns(). Then cache_ is updated.
 // get(): INSERT access_log READ, then return cache_ (nullopt if never put).
 // mutex_ is the message lock: put/get never interleave on the same store.
 // Production path: StoreWorker also takes an exclusive message-Set lock around

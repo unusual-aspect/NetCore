@@ -63,10 +63,9 @@ public:
     void setMaxConnections(std::size_t max) { max_connections_ = max; }
     std::size_t sessionCount() const { return sessions_by_socket_.size(); }
 
-    // True while this accept socket still has a live session (store replies check this).
-    bool hasSession(us_socket_t* socket) const {
-        return socket && sessions_by_socket_.find(socket) != sessions_by_socket_.end();
-    }
+    // True while this accept socket still has the same session (store replies).
+    // Socket pointers are reused after close — session_id distinguishes them.
+    bool hasSession(us_socket_t* socket, std::uint64_t session_id) const;
 
     // Send to every accepted session except `except` (e.g. the Shutdown requester).
     void broadcast(const NetProtocol& data, AbstractNetSession* except = nullptr);
@@ -101,6 +100,7 @@ private:
     SessionFactory session_factory_;
     std::unordered_map<us_socket_t*, std::unique_ptr<AbstractNetSession>> sessions_by_socket_;
     std::size_t max_connections_ = kMaxConnections;
+    std::uint64_t next_session_id_ = 1;
     Metrics metrics_{};
 
     // Client: non-owning pointer to the single attached session

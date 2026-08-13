@@ -19,7 +19,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
-    add_compile_options(/EHsc)
+    add_compile_options(/EHsc /W4)
+else()
+    add_compile_options(-Wall -Wextra)
 endif()
 
 add_subdirectory(src)

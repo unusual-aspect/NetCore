@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VCPKG_DISABLE_METRICS: "1"
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+  UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+  TSAN_OPTIONS: halt_on_error=1
+
+jobs:
+  linux:
+    name: ${{ matrix.preset }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [linux-debug, linux-asan, linux-tsan]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config zip unzip tar curl
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.VCPKG_ROOT }}
+            ~/.cache/vcpkg
+          key: vcpkg-${{ runner.os }}-${{ matrix.preset }}-${{ hashFiles('vcpkg.json') }}
+
+      - name: Bootstrap vcpkg
+        run: |
+          set -euo pipefail
+          if [ ! -x "${VCPKG_ROOT}/vcpkg" ]; then
+            git clone https://github.com/microsoft/vcpkg.git "${VCPKG_ROOT}"
+            git -C "${VCPKG_ROOT}" checkout e5a1490e1409d175932ef6014519e9ae149ddb7c
+            "${VCPKG_ROOT}/bootstrap-vcpkg.sh" -disableMetrics
+          fi
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build out/build/${{ matrix.preset }}
+
+      - name: Test
+        run: ctest --test-dir out/build/${{ matrix.preset }} --output-on-failure --timeout 180
