@@ -4,6 +4,7 @@
 #include "UtcTime.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -30,17 +31,18 @@ inline std::string currentTime() {
 
 // Structured line used on the wire path: TIME=<utc> IP=… OP=… MSG=…
 // Bodies are redacted unless setVerbose(true) was called (--verbose).
-inline bool& verboseLogging() {
-    static bool verbose = false;
+// Atomic: integration tests run several ClientApp threads in one process.
+inline std::atomic<bool>& verboseLogging() {
+    static std::atomic<bool> verbose{false};
     return verbose;
 }
 
 inline void setVerbose(bool enabled) {
-    verboseLogging() = enabled;
+    verboseLogging().store(enabled, std::memory_order_relaxed);
 }
 
 inline bool isVerbose() {
-    return verboseLogging();
+    return verboseLogging().load(std::memory_order_relaxed);
 }
 
 inline std::string redactMessage(std::string_view message) {

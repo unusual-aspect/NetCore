@@ -46,3 +46,13 @@ target_link_libraries(NetIntegrationTests PRIVATE
 )
 add_test(NAME NetIntegrationTests COMMAND NetIntegrationTests)
 set_tests_properties(NetIntegrationTests PROPERTIES TIMEOUT 180)
+
+# Off by default so gtest binaries never pick up libFuzzer's main.
+# CI workflow fuzz.yml enables this with Clang.
+option(ENABLE_LIBFUZZER "Build FrameCodec libFuzzer harness (Clang)" OFF)
+if(ENABLE_LIBFUZZER)
+    add_executable(FrameCodecFuzz fuzz/FrameCodec_try_decode_fuzzer.cpp)
+    target_link_libraries(FrameCodecFuzz PRIVATE NetProto)
+    target_compile_options(FrameCodecFuzz PRIVATE -fsanitize=fuzzer,address -fno-omit-frame-pointer)
+    target_link_options(FrameCodecFuzz PRIVATE -fsanitize=fuzzer,address)
+endif()

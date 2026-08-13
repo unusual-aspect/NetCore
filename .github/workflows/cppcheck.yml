@@ -1,0 +1,59 @@
+name: cppcheck
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: cppcheck-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VCPKG_DISABLE_METRICS: "1"
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  VCPKG_COMMIT: e5a1490e1409d175932ef6014519e9ae149ddb7c
+
+jobs:
+  cppcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config zip unzip tar curl cppcheck
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.VCPKG_ROOT }}
+            ~/.cache/vcpkg
+          key: vcpkg-${{ runner.os }}-linux-debug-${{ hashFiles('vcpkg.json') }}
+
+      - name: Bootstrap vcpkg
+        run: |
+          set -euo pipefail
+          if [ ! -x "${VCPKG_ROOT}/vcpkg" ]; then
+            git clone https://github.com/microsoft/vcpkg.git "${VCPKG_ROOT}"
+            git -C "${VCPKG_ROOT}" checkout "${VCPKG_COMMIT}"
+            "${VCPKG_ROOT}/bootstrap-vcpkg.sh" -disableMetrics
+          fi
+
+      - name: Configure
+        run: cmake --preset linux-debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Build
+        run: cmake --build out/build/linux-debug
+
+      - name: Run cppcheck
+        run: |
+          cppcheck --project=out/build/linux-debug/compile_commands.json \
+            --enable=warning,style,performance,portability \
+            --std=c++20 \
+            --inline-suppr \
+            --error-exitcode=1 \
+            --suppress=missingIncludeSystem \
+            --suppress='*:*/vcpkg/*' \
+            --suppress='*:*/vcpkg_installed/*'
