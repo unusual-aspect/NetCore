@@ -85,6 +85,9 @@ private:
 
     // Signal path: handler only stores true + us_wakeup_loop (no lock / no alloc).
     std::atomic<bool> signal_stop_{false};
+
+    // True while us_loop_run is on the stack. stop() must not re-enter the loop.
+    bool loop_running_ = false;
 };
 
 // Lives in us_socket_ext. write() leftover + on_writable drain.

@@ -7,4 +7,4 @@ C++20 networked shared-message service (`0xBEEF` + JSON, SQLite WAL).
 - Build, containers, run: [doc/HOWTO.txt](doc/HOWTO.txt)
 - Manual run evidence: [EVIDENCE.md](EVIDENCE.md) (DBG logs under [doc/evidence/](doc/evidence/))
 
-CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (configure, unit + integration tests, ASan/UBSan, TSan). `.gitea/` and the `ci-*` CMake presets are leftover template files and are **not** that pipeline. `Dockerfile.*` remain for optional container builds (see [doc/HOWTO.txt](doc/HOWTO.txt)).
+CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (Linux debug/ASan/TSan and Windows debug; every gtest binary). `.gitea/` and the `ci-*` CMake presets are leftover template files and are **not** that pipeline. `Dockerfile.*` remain for optional container builds (see [doc/HOWTO.txt](doc/HOWTO.txt)).

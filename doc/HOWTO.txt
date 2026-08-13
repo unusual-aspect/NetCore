@@ -105,7 +105,8 @@ Native:
   linux-tsan     ThreadSanitizer (not combined with ASan)
   win-debug      win-release
 
-CI (GitHub Actions, `.github/workflows/ci.yml`): linux-debug, linux-asan, linux-tsan.
+CI (GitHub Actions, `.github/workflows/ci.yml`): linux-debug, linux-asan, linux-tsan, win-debug.
+Each job runs every gtest binary (AppConfig, Protocol, ProtocolStress, MessageStore, NetIntegration).
 
 Leftover template presets (not the GitHub pipeline — see DECISIONS.md):
   ci-linux       Release, x64-linux, VCPKG_INSTALLED_DIR=/opt/vcpkg-linux

@@ -202,8 +202,10 @@ bool UsRuntime::connect(const std::string& host, std::uint16_t port) {
 }
 
 void UsRuntime::run() {
-    // Blocks until stop() wakes the loop.
+    // Blocks until stop() wakes the loop (listen/client polls keep num_polls > 0).
+    loop_running_ = true;
     us_loop_run(event_loop_);
+    loop_running_ = false;
 }
 
 void UsRuntime::requestStopFromSignal() {
@@ -250,9 +252,16 @@ void UsRuntime::stop() {
     if (socket_context_) {
         us_socket_context_close(0, socket_context_);
     }
+    if (!event_loop_) {
+        return;
+    }
     // Wake the loop so us_loop_run() can exit.
-    if (event_loop_) {
-        us_wakeup_loop(event_loop_);
+    us_wakeup_loop(event_loop_);
+    // uSockets queues listen/socket polls on closed_head and only us_poll_free()s
+    // them in the next loop post(). Bind-then-fail-store never enters run(), so
+    // drain here or LeakSanitizer reports the listen poll (80 bytes).
+    if (!loop_running_) {
+        us_loop_run(event_loop_);
     }
 }
 

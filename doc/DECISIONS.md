@@ -22,7 +22,7 @@ There is no TLS, no auth, no multi-document store. That is intentional (see belo
 
 ## CI template leftover
 
-**We use:** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on Ubuntu with presets `linux-debug`, `linux-asan` (ASan+UBSan), and `linux-tsan`. Each job configures, builds, and runs unit + integration tests (including `ProtocolStressTests`).
+**We use:** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on Ubuntu (`linux-debug`, `linux-asan` ASan+UBSan, `linux-tsan`) and Windows (`win-debug`). Each job configures, builds, and runs every gtest binary (AppConfig, Protocol, ProtocolStress, MessageStore, NetIntegration).
 
 **We keep but do not rely on:** `.gitea/workflows/build.yaml`, `Dockerfile.base`, `Dockerfile.builder`, and the `ci-linux` / `ci-win` / `ci-testing` presets (Dockerfiles for optional container builds; Gitea workflow/presets for historical reference). See `.gitea/workflows/README.md`.
 

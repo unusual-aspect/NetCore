@@ -11,9 +11,11 @@ concurrency:
 env:
   VCPKG_DISABLE_METRICS: "1"
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  VCPKG_COMMIT: e5a1490e1409d175932ef6014519e9ae149ddb7c
   ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
   UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
   TSAN_OPTIONS: halt_on_error=1
+  GTEST_COLOR: "1"
 
 jobs:
   linux:
@@ -44,7 +46,7 @@ jobs:
           set -euo pipefail
           if [ ! -x "${VCPKG_ROOT}/vcpkg" ]; then
             git clone https://github.com/microsoft/vcpkg.git "${VCPKG_ROOT}"
-            git -C "${VCPKG_ROOT}" checkout e5a1490e1409d175932ef6014519e9ae149ddb7c
+            git -C "${VCPKG_ROOT}" checkout "${VCPKG_COMMIT}"
             "${VCPKG_ROOT}/bootstrap-vcpkg.sh" -disableMetrics
           fi
 
@@ -54,5 +56,83 @@ jobs:
       - name: Build
         run: cmake --build out/build/${{ matrix.preset }}
 
-      - name: Test
-        run: ctest --test-dir out/build/${{ matrix.preset }} --output-on-failure --timeout 180
+      - name: Run all gtest binaries
+        run: |
+          set +e
+          bin="out/build/${{ matrix.preset }}/bin"
+          failed=0
+          for t in AppConfigTests ProtocolTests ProtocolStressTests MessageStoreTests NetIntegrationTests; do
+            echo "::group::${t} — registered cases"
+            "${bin}/${t}" --gtest_list_tests
+            echo "::endgroup::"
+            echo "::group::${t}"
+            timeout 180 "${bin}/${t}"
+            status=$?
+            echo "::endgroup::"
+            if [ "$status" -ne 0 ]; then
+              echo "::error::${t} failed (exit ${status})"
+              failed=1
+            fi
+          done
+          exit "$failed"
+
+  windows:
+    name: win-debug
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install ninja
+        run: choco install ninja -y
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.VCPKG_ROOT }}
+            ~/AppData/Local/vcpkg
+          key: vcpkg-${{ runner.os }}-win-debug-${{ hashFiles('vcpkg.json') }}
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "$env:VCPKG_ROOT/vcpkg.exe")) {
+            git clone https://github.com/microsoft/vcpkg.git $env:VCPKG_ROOT
+            git -C $env:VCPKG_ROOT checkout $env:VCPKG_COMMIT
+            & "$env:VCPKG_ROOT/bootstrap-vcpkg.bat" -disableMetrics
+          }
+
+      - name: Configure
+        run: cmake --preset win-debug
+
+      - name: Build
+        run: cmake --build out/build/win-debug
+
+      - name: Run all gtest binaries
+        shell: pwsh
+        run: |
+          $bin = "out/build/win-debug/bin"
+          $suites = @(
+            "AppConfigTests",
+            "ProtocolTests",
+            "ProtocolStressTests",
+            "MessageStoreTests",
+            "NetIntegrationTests"
+          )
+          $failed = 0
+          foreach ($t in $suites) {
+            $exe = Join-Path $bin "$t.exe"
+            Write-Host "::group::${t} — registered cases"
+            & $exe --gtest_list_tests
+            Write-Host "::endgroup::"
+            Write-Host "::group::$t"
+            & $exe
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "::error::${t} failed (exit $LASTEXITCODE)"
+              $failed = 1
+            }
+            Write-Host "::endgroup::"
+          }
+          exit $failed

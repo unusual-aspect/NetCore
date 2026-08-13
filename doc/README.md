@@ -169,7 +169,7 @@ CMake 3.22, C++20, vcpkg (`vcpkg.json`):
 
 Platforms for local/native builds: Linux (GCC) and Windows (MSVC). Presets live in `CMakePresets.json`. Bind and Shutdown loopback rules apply the same on Windows.
 
-CI: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) (Ubuntu: `linux-debug`, `linux-asan`, `linux-tsan`). `.gitea/workflows/` and `ci-*` presets are leftover template files — see [DECISIONS.md](DECISIONS.md#ci-template-leftover).
+CI: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) (Ubuntu: `linux-debug`, `linux-asan`, `linux-tsan`; Windows: `win-debug`). Each job runs every gtest binary. `.gitea/workflows/` and `ci-*` presets are leftover template files — see [DECISIONS.md](DECISIONS.md#ci-template-leftover).
 
 ---
 

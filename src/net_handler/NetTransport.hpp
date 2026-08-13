@@ -4,6 +4,7 @@
 
 #include "NetDefaults.hpp"
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -70,14 +71,15 @@ public:
     // Send to every accepted session except `except` (e.g. the Shutdown requester).
     void broadcast(const NetProtocol& data, AbstractNetSession* except = nullptr);
 
-    // Metrics (server)
+    // Metrics (server). Atomically updated on the I/O thread; tests/DBG may read
+    // them from another thread while the server is still running.
     struct Metrics {
-        std::uint64_t accepts = 0;
-        std::uint64_t rejected_conns = 0;
-        std::uint64_t reads = 0;
-        std::uint64_t sets = 0;
-        std::uint64_t shutdowns = 0;
-        std::uint64_t store_errors = 0;
+        std::atomic<std::uint64_t> accepts{0};
+        std::atomic<std::uint64_t> rejected_conns{0};
+        std::atomic<std::uint64_t> reads{0};
+        std::atomic<std::uint64_t> sets{0};
+        std::atomic<std::uint64_t> shutdowns{0};
+        std::atomic<std::uint64_t> store_errors{0};
     };
     Metrics& metrics() { return metrics_; }
     const Metrics& metrics() const { return metrics_; }
